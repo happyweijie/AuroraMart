@@ -1,12 +1,16 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 
 # Create your models here.
 class User(AbstractUser):
-    # use signals to update 
-    is_customer = models.BooleanField(default=False)
-    is_admin_user = models.BooleanField(default=False)
+    @property
+    def is_customer_user(self):
+        return hasattr(self, "customer_profile")
+
+    @property
+    def is_admin_user(self):
+        return hasattr(self, "admin_profile")
 
 
 class Customer(models.Model):
@@ -60,8 +64,18 @@ class Customer(models.Model):
     employment_status = models.CharField(max_length=30, choices=EMPLOYMENT_CHOICES)
     occupation = models.CharField(max_length=100, choices=OCCUPATION_CHOICES)
     education = models.CharField(max_length=30, choices=EDUCATION_CHOICES)
-    preferred_category = models.CharField(max_length=100, blank=True, null=True, choices=CATEGORY_CHOICES)
-
+    preferred_category = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        choices=CATEGORY_CHOICES,
+        editable=False,
+    )
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    
+    def __str__(self):
+        return f"Customer: {self.user.username}"
 
 class AdminProfile(models.Model):
     """
@@ -84,6 +98,8 @@ class AdminProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="admin_profile")
     position = models.CharField(max_length=100, blank=True, null=True, choices=POSITION_CHOICES)
     department = models.CharField(max_length=100, blank=True, null=True, choices=DEPARTMENT_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return f"Admin: {self.user.username}"
