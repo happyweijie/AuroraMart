@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-8 h-8 object-contain">
+                    <a href="{% url 'storefront:home' %}" class="text-xl font-semibold text-foreground">AuroraMart</a>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-2xl mx-8">
+                    <div class="relative">
+                        <input type="search" 
+                               placeholder="Search products..." 
+                               class="w-full px-4 py-2 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+                        <i data-lucide="search" class="w-5 h-5 text-muted-foreground absolute left-3 top-2.5"></i>
+                    </div>
+                </div>
+                
+                <!-- Navigation Icons -->
+                <div class="flex items-center gap-4">
+                    {% if user.is_authenticated %}
+                        <!-- Watchlist -->
+                        <a href="{% url 'storefront:watchlist' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
+                            <i data-lucide="heart" class="w-5 h-5 text-foreground"></i>
+                            <span class="absolute top-0 right-0 w-4 h-4 bg-cyan text-white text-xs rounded-full flex items-center justify-center">0</span>
+                        </a>
+                        
+                        <!-- Cart -->
+                        <a href="{% url 'storefront:cart' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 text-foreground"></i>
+                            <span class="absolute top-0 right-0 w-4 h-4 bg-cyan text-white text-xs rounded-full flex items-center justify-center">0</span>
+                        </a>
+                        
+                        <!-- User Menu -->
+                        <div class="relative">
+                            <button class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
+                                <div class="w-8 h-8 bg-gradient-to-br from-cyan to-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-sm font-medium">{{ user.first_name.0|default:'U' }}</span>
+                                </div>
+                                <span class="text-sm font-medium text-foreground">{{ user.first_name|default:'User' }}</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-muted-foreground"></i>
+                            </button>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'users:login' %}" class="px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-100 rounded-lg">
+                            Sign In
+                        </a>
+                        <a href="{% url 'users:register' %}" class="px-4 py-2 text-sm font-medium text-white bg-cyan hover:bg-cyan/90 rounded-lg">
+                            Sign Up
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Category Navigation -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-6 h-12 overflow-x-auto">
+                <a href="{% url 'storefront:products' %}" class="text-sm font-medium text-foreground hover:text-cyan whitespace-nowrap">
+                    All Products
+                </a>
+                <a href="{% url 'storefront:category' 'electronics' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    Electronics
+                </a>
+                <a href="{% url 'storefront:category' 'fashion' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    Fashion
+                </a>
+                <a href="{% url 'storefront:category' 'home-kitchen' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    Home & Kitchen
+                </a>
+                <a href="{% url 'storefront:category' 'books' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    Books
+                </a>
+                <a href="{% url 'storefront:category' 'health' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    Health
+                </a>
+                <a href="{% url 'storefront:category' 'sports' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    Sports & Outdoors
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="flex-1 bg-background">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {% block page_content %}
+            {% endblock %}
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-primary text-primary-foreground mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-8 h-8 object-contain">
+                        <span class="text-lg font-semibold">AuroraMart</span>
+                    </div>
+                    <p class="text-sm text-gray-400">Your one-stop shop for quality products with personalized recommendations.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">Shop</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-cyan">All Products</a></li>
+                        <li><a href="#" class="hover:text-cyan">New Arrivals</a></li>
+                        <li><a href="#" class="hover:text-cyan">Best Sellers</a></li>
+                        <li><a href="#" class="hover:text-cyan">Promotions</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">Customer Service</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-cyan">Contact Us</a></li>
+                        <li><a href="#" class="hover:text-cyan">Track Order</a></li>
+                        <li><a href="#" class="hover:text-cyan">Returns</a></li>
+                        <li><a href="#" class="hover:text-cyan">FAQs</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">Account</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-cyan">My Account</a></li>
+                        <li><a href="#" class="hover:text-cyan">Order History</a></li>
+                        <li><a href="#" class="hover:text-cyan">Watchlist</a></li>
+                        <li><a href="#" class="hover:text-cyan">Settings</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2025 AuroraMart. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}

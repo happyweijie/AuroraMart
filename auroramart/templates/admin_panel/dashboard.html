@@ -1,0 +1,166 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Analytics Dashboard{% endblock %}
+{% block page_description %}Overview of your store performance and key metrics{% endblock %}
+
+{% block page_content %}
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Revenue -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-cyan to-blue-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="dollar-sign" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+12.5%</span>
+        </div>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">${{ total_revenue|default:"0.00" }}</h3>
+        <p class="text-sm text-muted-foreground">Total Revenue</p>
+    </div>
+    
+    <!-- Total Orders -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="shopping-cart" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+8.2%</span>
+        </div>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ total_orders|default:"0" }}</h3>
+        <p class="text-sm text-muted-foreground">Total Orders</p>
+    </div>
+    
+    <!-- Total Customers -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="users" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+15.3%</span>
+        </div>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ total_customers|default:"0" }}</h3>
+        <p class="text-sm text-muted-foreground">Total Customers</p>
+    </div>
+    
+    <!-- Total Products -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="package" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+5.1%</span>
+        </div>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ total_products|default:"0" }}</h3>
+        <p class="text-sm text-muted-foreground">Total Products</p>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Recent Orders -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4">Recent Orders</h3>
+        <div class="space-y-4">
+            {% for order in recent_orders %}
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 text-muted-foreground"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-foreground">Order #{{ order.id }}</p>
+                        <p class="text-xs text-muted-foreground">{{ order.customer.user.username }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-medium text-foreground">${{ order.total_price }}</p>
+                    <span class="text-xs px-2 py-1 rounded-full 
+                        {% if order.status == 'delivered' %}bg-green-50 text-green-700
+                        {% elif order.status == 'shipped' %}bg-blue-50 text-blue-700
+                        {% elif order.status == 'processing' %}bg-yellow-50 text-yellow-700
+                        {% else %}bg-gray-50 text-gray-700{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-muted-foreground text-center py-8">No orders yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Low Stock Products -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4">Low Stock Products</h3>
+        <div class="space-y-4">
+            {% for product in low_stock_products %}
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <i data-lucide="package" class="w-5 h-5 text-muted-foreground"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-foreground">{{ product.name|truncatewords:5 }}</p>
+                        <p class="text-xs text-muted-foreground">{{ product.sku }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-medium text-foreground">{{ product.stock }} units</p>
+                    <p class="text-xs text-muted-foreground">Threshold: {{ product.reorder_threshold }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-muted-foreground text-center py-8">All products are well stocked</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-lg border border-gray-200 p-6">
+    <h3 class="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <a href="{% url 'admin_panel:products' %}" class="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="w-12 h-12 bg-cyan/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="package" class="w-6 h-6 text-cyan"></i>
+            </div>
+            <span class="text-sm font-medium text-foreground">Add Product</span>
+        </a>
+        
+        <a href="{% url 'admin_panel:orders' %}" class="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="shopping-cart" class="w-6 h-6 text-purple-500"></i>
+            </div>
+            <span class="text-sm font-medium text-foreground">View Orders</span>
+        </a>
+        
+        <a href="{% url 'admin_panel:customers' %}" class="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="users" class="w-6 h-6 text-orange-500"></i>
+            </div>
+            <span class="text-sm font-medium text-foreground">Manage Customers</span>
+        </a>
+        
+        <a href="{% url 'admin_panel:inventory' %}" class="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="warehouse" class="w-6 h-6 text-green-500"></i>
+            </div>
+            <span class="text-sm font-medium text-foreground">Update Inventory</span>
+        </a>
+        
+        <a href="{% url 'admin_panel:promotions' %}" class="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="w-12 h-12 bg-pink-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="tag" class="w-6 h-6 text-pink-500"></i>
+            </div>
+            <span class="text-sm font-medium text-foreground">Create Promotion</span>
+        </a>
+        
+        <a href="{% url 'admin_panel:import_export' %}" class="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="upload" class="w-6 h-6 text-blue-500"></i>
+            </div>
+            <span class="text-sm font-medium text-foreground">Import Data</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
