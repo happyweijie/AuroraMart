@@ -4,7 +4,6 @@ from django.db import models
 
 from users.models import Customer
 
-
 class Category(models.Model):
 	"""Supports US001, US002, US003, US004 and ADM002 by structuring the product taxonomy."""
 	name = models.CharField(max_length=100)
