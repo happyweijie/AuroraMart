@@ -19,7 +19,8 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 
 urlpatterns = [
+    path('', include('storefront.urls')),
     path('admin/', admin.site.urls),
     path('panel/', include('admin_panel.urls')),
-    path('', RedirectView.as_view(url='/panel/dashboard/', permanent=False)),
+    #path('', RedirectView.as_view(url='/panel/dashboard/', permanent=False)),
 ]
