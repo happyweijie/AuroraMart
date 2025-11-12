@@ -141,8 +141,25 @@
                 </div>
             </div>
             
-            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+            <div class="border-t border-gray-800 mt-8 pt-8 flex items-center justify-between text-sm text-gray-400">
                 <p>&copy; 2025 AuroraMart. All rights reserved.</p>
+                
+                <!-- Admin Access Icon -->
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_panel:dashboard' %}" 
+                       class="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-cyan to-purple-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+                       title="Admin Panel">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span class="text-xs font-medium">Admin Panel</span>
+                    </a>
+                {% else %}
+                    <a href="{% url 'admin_panel:admin_login' %}" 
+                       class="flex items-center gap-2 px-3 py-2 bg-sidebar hover:bg-sidebar-accent text-sidebar-foreground rounded-lg transition-colors"
+                       title="Admin Login">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span class="text-xs font-medium">Admin Login</span>
+                    </a>
+                {% endif %}
             </div>
         </div>
     </footer>

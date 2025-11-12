@@ -7,9 +7,17 @@
     <aside class="sidebar w-64 flex-shrink-0 flex flex-col">
         <!-- Logo -->
         <div class="p-6 border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-8 h-8 object-contain">
-                <span class="text-sidebar-foreground font-semibold text-lg">AuroraMart Admin</span>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-8 h-8 object-contain">
+                    <span class="text-sidebar-foreground font-semibold text-lg">AuroraMart Admin</span>
+                </div>
+                <!-- Back to Storefront Button -->
+                <a href="{% url 'storefront:home' %}" 
+                   class="p-2 hover:bg-sidebar-accent rounded-lg transition-colors" 
+                   title="Back to Storefront">
+                    <i data-lucide="store" class="w-5 h-5 text-cyan"></i>
+                </a>
             </div>
         </div>
         
@@ -133,7 +141,7 @@
                     <p class="text-sm font-medium text-sidebar-foreground truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
                     <p class="text-xs text-muted-foreground truncate">Admin</p>
                 </div>
-                <a href="{% url 'admin:logout' %}" class="text-muted-foreground hover:text-sidebar-foreground">
+                <a href="{% url 'admin_panel:admin_logout' %}" class="text-muted-foreground hover:text-cyan transition-colors" title="Logout">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                 </a>
             </div>
