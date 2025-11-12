@@ -53,7 +53,7 @@
             <div class="p-4">
                 <!-- Category -->
                 <p class="text-xs text-muted-foreground mb-1">
-                    <a href="{% url 'storefront:category' product.category.name %}">{{ product.category.name }}</a>
+                    <a href="{% url 'storefront:category' product.category.slug %}">{{ product.category.name }}</a>
                 </p>
                 
                 <!-- Product Name -->

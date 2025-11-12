@@ -45,16 +45,7 @@ def products(request):
         'page_obj': page_obj,
     })
 
-def category(request, category):
-    if " - " in category:
-        category = category.split(" - ")
-    elif " & " in category:
-        category = category.split(" & ")
-    else:
-        category = category.split(" ")    
-
-    slug = "-".join(category).lower()
-    
+def category(request, slug):    
     # Get the sort parameter
     sort_by = request.GET.get('sort', 'rating')
     
