@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Login - AuroraMart{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-sidebar via-sidebar-accent to-sidebar flex items-center justify-center p-4">
+    <!-- Back to Storefront Link -->
+    <a href="{% url 'storefront:home' %}" 
+       class="absolute top-6 left-6 flex items-center gap-2 text-sidebar-foreground hover:text-cyan transition-colors">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        <span class="text-sm font-medium">Back to Storefront</span>
+    </a>
+    
+    <div class="w-full max-w-md">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-12 h-12 object-contain">
+                <h1 class="text-3xl font-bold text-sidebar-foreground">AuroraMart Admin</h1>
+            </div>
+            <p class="text-sm text-muted-foreground">Sign in to access the admin panel</p>
+        </div>
+        
+        <!-- Login Card -->
+        <div class="bg-card rounded-lg shadow-xl p-8">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-4 p-3 rounded-lg {% if message.tags == 'error' %}bg-destructive/10 text-destructive{% else %}bg-accent text-accent-foreground{% endif %}">
+                        <p class="text-sm">{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" action="{% url 'admin_panel:admin_login' %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Username Field -->
+                <div>
+                    <label for="username" class="block text-sm font-medium text-foreground mb-2">
+                        Username
+                    </label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               required
+                               autofocus
+                               class="w-full px-4 py-3 pl-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent"
+                               placeholder="Enter your username">
+                        <i data-lucide="user" class="w-5 h-5 text-muted-foreground absolute left-3 top-3.5"></i>
+                    </div>
+                </div>
+                
+                <!-- Password Field -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-foreground mb-2">
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required
+                               class="w-full px-4 py-3 pl-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent"
+                               placeholder="Enter your password">
+                        <i data-lucide="lock" class="w-5 h-5 text-muted-foreground absolute left-3 top-3.5"></i>
+                    </div>
+                </div>
+                
+                <!-- Remember Me -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="remember" class="w-4 h-4 text-cyan border-border rounded focus:ring-cyan">
+                        <span class="text-sm text-muted-foreground">Remember me</span>
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" 
+                        class="w-full py-3 px-4 bg-gradient-to-br from-cyan to-purple-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <i data-lucide="shield" class="w-5 h-5"></i>
+                    <span>Sign In to Admin Panel</span>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-muted-foreground">
+                This area is restricted to authorized staff only.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

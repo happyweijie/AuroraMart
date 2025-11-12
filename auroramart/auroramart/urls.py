@@ -22,5 +22,6 @@ urlpatterns = [
     path('', include('storefront.urls')),
     path('admin/', admin.site.urls),
     path('panel/', include('admin_panel.urls')),
+    path('users/', include('users.urls')),
     #path('', RedirectView.as_view(url='/panel/dashboard/', permanent=False)),
 ]
