@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-cyan/10 to-purple-500/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-cyan to-purple-500 rounded-lg flex items-center justify-center">
+                    <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
+            <p class="text-sm text-muted-foreground">Sign in to your AuroraMart account</p>
+        </div>
+
+        <!-- Login Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Error Messages -->
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Username Field -->
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Username
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-foreground">
+                        Password
+                    </label>
+                    <a href="#" class="text-sm text-cyan hover:underline">Forgot password?</a>
+                </div>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Remember Me -->
+            <div class="flex items-center">
+                <input type="checkbox" name="remember_me" id="remember_me" 
+                       class="w-4 h-4 text-cyan border-gray-300 rounded focus:ring-cyan">
+                <label for="remember_me" class="ml-2 text-sm text-foreground">
+                    Remember me
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                    class="w-full px-6 py-3 bg-gradient-to-br from-cyan to-purple-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <span>Sign In</span>
+                <i data-lucide="log-in" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Divider -->
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-muted-foreground">Don't have an account?</span>
+                </div>
+            </div>
+
+            <!-- Sign Up Link -->
+            <a href="{% url 'users:register' %}" 
+               class="block w-full px-6 py-3 border border-gray-200 text-foreground font-medium text-center rounded-lg hover:bg-gray-50 transition-colors">
+                Create Account
+            </a>
+        </form>
+
+        <!-- Back to Home -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'storefront:home' %}" class="text-sm text-muted-foreground hover:text-cyan inline-flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Back to Home</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}
