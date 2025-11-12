@@ -1,0 +1,166 @@
+{% extends "storefront_base.html" %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-foreground mb-2">
+                {% if category_name %}{{ category_name }}{% else %}All Products{% endif %}
+            </h1>
+            <p class="text-sm text-muted-foreground">
+                Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
+            </p>
+        </div>
+        
+        <!-- Sort Dropdown -->
+        <div class="flex items-center gap-2">
+            <label for="sort" class="text-sm text-muted-foreground">Sort by:</label>
+            <select id="sort" onchange="window.location.href='?sort=' + this.value" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+                <option value="rating" {% if request.GET.sort == 'rating' or not request.GET.sort %}selected{% endif %}>Highest Rated</option>
+                <option value="price-low" {% if request.GET.sort == 'price-low' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price-high" {% if request.GET.sort == 'price-high' %}selected{% endif %}>Price: High to Low</option>
+                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Products Grid -->
+    {% if page_obj %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for product in page_obj %}
+        <div class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow group">
+            <!-- Product Image -->
+            <div class="aspect-square bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
+                
+                <!-- Watchlist Button -->
+                {% if user.is_authenticated %}
+                <button class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50">
+                    <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                </button>
+                {% endif %}
+                
+                <!-- Out of Stock Badge -->
+                {% if product.stock == 0 %}
+                <div class="absolute top-3 left-3 px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-full">
+                    Out of Stock
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Product Info -->
+            <div class="p-4">
+                <!-- Category -->
+                <p class="text-xs text-muted-foreground mb-1">
+                    <a href="{% url 'storefront:category' product.category.name %}">{{ product.category.name }}</a>
+                </p>
+                
+                <!-- Product Name -->
+                <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2 min-h-[3.5rem]">
+                    {{ product.name }}
+                </h3>
+                
+                <!-- Description -->
+                <p class="text-sm text-muted-foreground mb-3 line-clamp-2 min-h-[2.5rem]">
+                    {{ product.description|truncatewords:15 }}
+                </p>
+                
+                <!-- Rating and Price -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                        <span class="text-sm font-medium text-foreground">{{ product.rating }}</span>
+                    </div>
+                    <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
+                </div>
+                
+                <!-- Stock Info -->
+                {% if product.stock > 0 and product.stock <= product.reorder_threshold %}
+                <p class="text-xs text-orange-500 mb-3">Only {{ product.stock }} left in stock</p>
+                {% elif product.stock > 0 %}
+                <p class="text-xs text-green-600 mb-3">In Stock</p>
+                {% endif %}
+                
+                <!-- Action Button -->
+                {% if product.stock > 0 %}
+                <a href="{% url 'storefront:product_detail' product.sku %}" 
+                   class="block w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors font-medium">
+                    View Details
+                </a>
+                {% else %}
+                <button disabled class="block w-full px-4 py-2 bg-gray-300 text-gray-500 text-center rounded-lg cursor-not-allowed font-medium">
+                    Out of Stock
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-center gap-2 mt-8">
+        <!-- First Page -->
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+        </a>
+        {% endif %}
+        
+        <!-- Previous Page -->
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </a>
+        {% else %}
+        <button disabled class="px-3 py-2 border border-gray-200 rounded-lg opacity-50 cursor-not-allowed">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        {% endif %}
+        
+        <!-- Page Numbers -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="px-4 py-2 bg-cyan text-white rounded-lg font-medium">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        <!-- Next Page -->
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </a>
+        {% else %}
+        <button disabled class="px-3 py-2 border border-gray-200 rounded-lg opacity-50 cursor-not-allowed">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+        {% endif %}
+        
+        <!-- Last Page -->
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-card border border-border rounded-lg p-12 text-center">
+        <i data-lucide="package-x" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-foreground mb-2">No Products Found</h3>
+        <p class="text-sm text-muted-foreground">
+            {% if category_name %}
+            We couldn't find any products in the {{ category_name }} category
+            {% else %}
+            We couldn't find any products matching your criteria
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
