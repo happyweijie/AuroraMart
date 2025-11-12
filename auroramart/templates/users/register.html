@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-cyan/10 to-purple-500/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-xl w-full bg-white rounded-lg shadow-lg p-8"> {# Increased max-w-md to max-w-xl for more space #}
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-cyan to-purple-500 rounded-lg flex items-center justify-center">
+                    <i data-lucide="user-plus" class="w-6 h-6 text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-foreground mb-2">Create Your Account</h2>
+            <p class="text-sm text-muted-foreground">Sign up to get started with AuroraMart</p>
+        </div>
+
+        <!-- Register Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Error Messages -->
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- User Account Details Section -->
+            <h3 class="text-xl font-semibold text-foreground mt-8 mb-4 border-b pb-2">Account Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Username Field -->
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Username
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Email Field -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Email Address
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- First Name Field -->
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        First Name
+                    </label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Last Name Field -->
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Last Name
+                    </label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Password
+                    </label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Password Confirmation Field -->
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Confirm Password
+                    </label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Customer Profile Details Section -->
+            <h3 class="text-xl font-semibold text-foreground mt-8 mb-4 border-b pb-2">Customer Profile</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Age Field -->
+                <div>
+                    <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Age
+                    </label>
+                    {{ form.age }}
+                    {% if form.age.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.age.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Household Size Field -->
+                <div>
+                    <label for="{{ form.household_size.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Household Size
+                    </label>
+                    {{ form.household_size }}
+                    {% if form.household_size.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.household_size.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Monthly Income SGD Field -->
+                <div>
+                    <label for="{{ form.monthly_income_sgd.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Monthly Income (SGD)
+                    </label>
+                    {{ form.monthly_income_sgd }}
+                    {% if form.monthly_income_sgd.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.monthly_income_sgd.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Gender Field -->
+                <div>
+                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Gender
+                    </label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Employment Status Field -->
+                <div>
+                    <label for="{{ form.employment_status.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Employment Status
+                    </label>
+                    {{ form.employment_status }}
+                    {% if form.employment_status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.employment_status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Occupation Field -->
+                <div>
+                    <label for="{{ form.occupation.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Occupation
+                    </label>
+                    {{ form.occupation }}
+                    {% if form.occupation.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.occupation.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Education Field -->
+                <div>
+                    <label for="{{ form.education.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                        Education
+                    </label>
+                    {{ form.education }}
+                    {% if form.education.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.education.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Has Children Field (Checkbox - separate div for styling) -->
+            <div class="mt-4">
+                <div class="flex items-center">
+                    {{ form.has_children }}
+                    <label for="{{ form.has_children.id_for_label }}" class="ml-2 text-sm text-foreground">
+                        Do you have children?
+                    </label>
+                </div>
+                {% if form.has_children.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.has_children.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                    class="w-full px-6 py-3 bg-gradient-to-br from-cyan to-purple-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <span>Register</span>
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Divider -->
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-muted-foreground">Already have an account?</span>
+                </div>
+            </div>
+
+            <!-- Sign In Link -->
+            <a href="{% url 'users:login' %}" 
+               class="block w-full px-6 py-3 border border-gray-200 text-foreground font-medium text-center rounded-lg hover:bg-gray-50 transition-colors">
+                Sign In
+            </a>
+        </form>
+
+        <!-- Back to Home -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'storefront:home' %}" class="text-sm text-muted-foreground hover:text-cyan inline-flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Back to Home</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}
