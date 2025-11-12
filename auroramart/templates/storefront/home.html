@@ -50,18 +50,47 @@
         </div>
     </div>
     
-    <!-- Placeholder for Featured Products -->
+     <!-- Featured Products -->
     <div>
         <h2 class="text-2xl font-semibold text-foreground mb-6">Featured Products</h2>
+        {% if featured_products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in featured_products %}
+            <div class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="aspect-square bg-gray-100 flex items-center justify-center">
+                    <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2">{{ product.name }}</h3>
+                    <p class="text-sm text-muted-foreground mb-3 line-clamp-2">{{ product.description }}</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                            <span class="text-sm text-foreground">{{ product.rating }}</span>
+                        </div>
+                    </div>
+                    {% if product.stock > 0 %}
+                    <a href="{% url 'storefront:product_detail' product.sku %}" 
+                       class="block w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors">
+                        View Details
+                    </a>
+                    {% else %}
+                    <button disabled class="block w-full px-4 py-2 bg-gray-300 text-gray-500 text-center rounded-lg cursor-not-allowed">
+                        Out of Stock
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
         <div class="bg-card border border-border rounded-lg p-12 text-center">
             <i data-lucide="package" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
-            <h3 class="text-lg font-medium text-foreground mb-2">Products Coming Soon</h3>
-            <p class="text-sm text-muted-foreground mb-6">We're loading our amazing product catalog</p>
-            <a href="{% url 'storefront:products' %}" 
-               class="inline-flex items-center gap-2 px-4 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
-                <span>View All Products</span>
-            </a>
+            <h3 class="text-lg font-medium text-foreground mb-2">No Products Available</h3>
+            <p class="text-sm text-muted-foreground">Check back soon for amazing products</p>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
