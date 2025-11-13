@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import User, Customer
-from .forms import CustomerRegistrationForm, CustomerLoginForm
-from django.contrib.auth import authenticate, login, logout
+from .forms import CustomerRegistrationForm, CustomerLoginForm, PasswordChangeForm
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 
 # Create your views here.
@@ -52,4 +52,41 @@ def register(request):
     return render(request, 'users/register.html', {
         'form': form
         })
+
+
+@login_required
+def profile(request):
+    """Display user profile and handle password change"""
+    user = request.user
+    customer = None
+    
+    # Get customer profile if exists
+    if hasattr(user, 'customer_profile'):
+        customer = user.customer_profile
+    
+    password_form = None
+    password_change_success = False
+    
+    # Handle password change
+    if request.method == 'POST' and 'change_password' in request.POST:
+        password_form = PasswordChangeForm(user, request.POST)
+        if password_form.is_valid():
+            password_form.save()
+            update_session_auth_hash(request, user)  # Keep user logged in after password change
+            messages.success(request, 'Your password has been changed successfully.')
+            password_change_success = True
+            password_form = None  # Reset form after successful change
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        password_form = PasswordChangeForm(user)
+    
+    context = {
+        'user': user,
+        'customer': customer,
+        'password_form': password_form,
+        'password_change_success': password_change_success,
+    }
+    
+    return render(request, 'users/profile.html', context)
 

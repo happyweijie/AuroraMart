@@ -44,6 +44,9 @@
         }
     </script>
     
+    <!-- Alpine.js for interactive components -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <!-- Lucide Icons (matching your wireframe) -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
@@ -90,6 +93,11 @@
         
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
+        }
+        
+        /* Alpine.js x-cloak - hide elements until Alpine.js is loaded */
+        [x-cloak] {
+            display: none !important;
         }
     </style>
     

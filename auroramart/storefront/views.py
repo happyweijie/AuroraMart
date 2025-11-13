@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.core.paginator import Paginator
+from django.db.models import Count
 from .models import Product, Category
 
 # Create your views here.
@@ -12,8 +13,18 @@ def index(request):
     .order_by('-rating', '-created_at') \
     .all()[:12]
 
+    # Get categories that have products (active and not archived)
+    categories_with_products = Category.objects.filter(
+        products__is_active=True,
+        products__archived=False,
+        products__stock__gte=0
+    ).annotate(
+        product_count=Count('products')
+    ).distinct().order_by('-product_count', 'name')[:10]
+
     return render(request, 'storefront/home.html', {
-        'featured_products': products
+        'featured_products': products,
+        'categories': categories_with_products
         })
 
 def products(request):
