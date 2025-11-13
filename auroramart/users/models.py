@@ -68,7 +68,7 @@ class Customer(models.Model):
         max_length=100,
         blank=True,
         null=True,
-        choices=CATEGORY_CHOICES,
+        choices=CATEGORY_CHOICES, 
         editable=True, # set to false later
     )
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)

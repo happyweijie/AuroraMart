@@ -4,6 +4,7 @@ from .models import User, Customer
 from .forms import CustomerRegistrationForm, CustomerLoginForm, PasswordChangeForm
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from mlservices.predict_preferred_category import predict_preferred_category
 
 # Create your views here.
 def user_login(request):
@@ -42,8 +43,21 @@ def register(request):
     if request.method == 'POST':
         form = CustomerRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
+            customer = form.save()
+
+            # set up customer's preferred category prediction
+            preferred_category = predict_preferred_category({
+                'age': customer.age,
+                'household_size': customer.household_size,
+                'has_children': int(customer.has_children),  # some models prefer numeric 0/1
+                'monthly_income_sgd': float(customer.monthly_income_sgd),
+                'gender': customer.gender,
+                'employment_status': customer.employment_status,
+                'occupation': customer.occupation,
+                'education': customer.education
+            })
+
+            login(request, customer)
             messages.success(request, 'Account created successfully! Welcome to AuroraMart.')
             return redirect('storefront:home')
     else:
