@@ -15,12 +15,16 @@
                 
                 <!-- Search Bar -->
                 <div class="flex-1 max-w-2xl mx-8">
-                    <div class="relative">
+                    <form action="{% url 'storefront:products' %}" method="get" class="relative">
                         <input type="search" 
+                               name="q"
+                               value="{{ search_query|default:'' }}"
                                placeholder="Search products..." 
                                class="w-full px-4 py-2 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
-                        <i data-lucide="search" class="w-5 h-5 text-muted-foreground absolute left-3 top-2.5"></i>
-                    </div>
+                        <button type="submit" class="absolute left-3 top-2.5">
+                            <i data-lucide="search" class="w-5 h-5 text-muted-foreground"></i>
+                        </button>
+                    </form>
                 </div>
                 
                 <!-- Navigation Icons -->

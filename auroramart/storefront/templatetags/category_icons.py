@@ -6,9 +6,9 @@ register = template.Library()
 CATEGORY_ICONS = {
     'accessories': 'watch',
     'tops': 'shirt',
-    'outerwear': 'shirt',  # Using shirt as outerwear icon
-    'footwear': 'shoe',  # Using shoe icon for footwear
-    'bottoms': 'shirt',
+    'outerwear': 'coat-hanger',  # Coat hanger icon for outerwear
+    'footwear': 'footprints',  # Using footprints icon for footwear
+    'bottoms': 'trousers',  # Trousers icon for bottoms/pants
     'textbooks': 'book-open',
     'fiction': 'book',
     'personal care': 'sparkles',
