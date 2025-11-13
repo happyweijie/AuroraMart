@@ -38,4 +38,6 @@ db.sqlite3-journal
 .DS_Store
 Thumbs.db
 
+# ml models
 /mlmodels
+*.joblib
