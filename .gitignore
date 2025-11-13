@@ -39,5 +39,4 @@ db.sqlite3-journal
 Thumbs.db
 
 # ml models
-/mlmodels
 *.joblib
