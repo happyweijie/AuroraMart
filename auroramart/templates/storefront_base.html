@@ -39,7 +39,9 @@
                         <!-- Cart -->
                         <a href="{% url 'storefront:cart' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
                             <i data-lucide="shopping-cart" class="w-5 h-5 text-foreground"></i>
-                            <span class="absolute top-0 right-0 w-4 h-4 bg-cyan text-white text-xs rounded-full flex items-center justify-center">0</span>
+                            {% if cart_item_count > 0 %}
+                            <span class="absolute top-0 right-0 w-5 h-5 bg-cyan text-white text-xs rounded-full flex items-center justify-center font-medium">{{ cart_item_count }}</span>
+                            {% endif %}
                         </a>
                         
                         <!-- User Menu -->
@@ -69,6 +71,11 @@
                                     Profile
                                 </a>
                                 
+                                <a href="{% url 'storefront:order_list' %}" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
+                                    <i data-lucide="package" class="inline-block w-4 h-4 mr-2 text-muted-foreground"></i>
+                                    My Orders
+                                </a>
+                                
                                 {# Separator #}
                                 <div class="border-t border-gray-100 my-1"></div>
 
@@ -80,6 +87,14 @@
                             </div>
                         </div>
                     {% else %}
+                        <!-- Cart for Guest Users -->
+                        <a href="{% url 'storefront:cart' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 text-foreground"></i>
+                            {% if cart_item_count > 0 %}
+                            <span class="absolute top-0 right-0 w-5 h-5 bg-cyan text-white text-xs rounded-full flex items-center justify-center font-medium">{{ cart_item_count }}</span>
+                            {% endif %}
+                        </a>
+                        
                         <a href="{% url 'users:login' %}" class="px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-100 rounded-lg">
                             Sign In
                         </a>

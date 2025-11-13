@@ -1,0 +1,176 @@
+{% extends 'storefront_base.html' %}
+
+{% block title %}Checkout - AuroraMart{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-foreground">Checkout</h1>
+        <p class="text-muted-foreground mt-2">Complete your order</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Checkout Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-card border border-border rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-foreground mb-6">Shipping & Payment Information</h2>
+                
+                <form method="post" action="{% url 'storefront:checkout' %}">
+                    {% csrf_token %}
+                    
+                    <!-- Shipping Address Section -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-cyan"></i>
+                            Shipping Address
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Street Address -->
+                            <div>
+                                <label for="id_street_address" class="block text-sm font-medium text-foreground mb-2">
+                                    Street Address *
+                                </label>
+                                {{ form.street_address }}
+                                {% if form.street_address.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.street_address.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- City and Postal Code -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="id_city" class="block text-sm font-medium text-foreground mb-2">
+                                        City *
+                                    </label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <div>
+                                    <label for="id_postal_code" class="block text-sm font-medium text-foreground mb-2">
+                                        Postal Code *
+                                    </label>
+                                    {{ form.postal_code }}
+                                    {% if form.postal_code.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.postal_code.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Country -->
+                            <div>
+                                <label for="id_country" class="block text-sm font-medium text-foreground mb-2">
+                                    Country *
+                                </label>
+                                {{ form.country }}
+                                {% if form.country.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.country.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method Section -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-cyan"></i>
+                            Payment Method
+                        </h3>
+                        
+                        <div>
+                            <label for="id_payment_method" class="block text-sm font-medium text-foreground mb-2">
+                                Select Payment Method *
+                            </label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.payment_method.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-2 text-sm text-muted-foreground">
+                                <i data-lucide="info" class="w-4 h-4 inline"></i>
+                                Payment processing is a placeholder for this demo
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4 pt-6 border-t border-border">
+                        <a href="{% url 'storefront:cart' %}" 
+                           class="flex-1 px-6 py-3 border border-gray-300 text-foreground font-medium rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            Back to Cart
+                        </a>
+                        <button type="submit" 
+                                class="flex-1 px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            Place Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+            <div class="bg-card border border-border rounded-lg p-6 sticky top-20">
+                <h2 class="text-xl font-semibold text-foreground mb-4">Order Summary</h2>
+                
+                <!-- Cart Items -->
+                <div class="space-y-3 mb-6 max-h-96 overflow-y-auto">
+                    {% for item in cart_items %}
+                    <div class="flex gap-3 pb-3 border-b border-border">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-medium text-foreground">
+                                {% if using_db_cart %}
+                                    {{ item.product.name }}
+                                {% else %}
+                                    {{ item.product.name }}
+                                {% endif %}
+                            </h4>
+                            <p class="text-xs text-muted-foreground mt-1">
+                                Qty: {% if using_db_cart %}{{ item.quantity }}{% else %}{{ item.quantity }}{% endif %}
+                            </p>
+                        </div>
+                        <div class="text-sm font-medium text-foreground">
+                            ${% if using_db_cart %}{{ item.subtotal }}{% else %}{{ item.subtotal }}{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pricing Details -->
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Subtotal</span>
+                        <span class="font-medium text-foreground">${{ total }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Shipping</span>
+                        <span class="font-medium text-green-600">FREE</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Tax</span>
+                        <span class="font-medium text-foreground">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-border pt-4">
+                    <div class="flex justify-between mb-4">
+                        <span class="text-lg font-semibold text-foreground">Total</span>
+                        <span class="text-2xl font-bold text-cyan">${{ total }}</span>
+                    </div>
+                    
+                    <div class="bg-cyan/10 border border-cyan/20 rounded-lg p-3">
+                        <p class="text-xs text-cyan flex items-start gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                            <span>Your payment information is secure and encrypted</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

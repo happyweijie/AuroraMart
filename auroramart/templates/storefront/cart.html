@@ -1,0 +1,182 @@
+{% extends "storefront_base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-foreground mb-2">Shopping Cart</h1>
+        <p class="text-sm text-muted-foreground">
+            {% if cart_items %}
+                {{ cart_items|length }} item{{ cart_items|length|pluralize }} in your cart
+            {% else %}
+                Your cart is empty
+            {% endif %}
+        </p>
+    </div>
+
+    {% if cart_items %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Cart Items -->
+        <div class="lg:col-span-2 space-y-4">
+            {% for item in cart_items %}
+            <div class="bg-card border border-border rounded-lg p-6 flex gap-6">
+                <!-- Product Image -->
+                <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="package" class="w-12 h-12 text-gray-400"></i>
+                </div>
+
+                <!-- Product Details -->
+                <div class="flex-1">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <h3 class="font-semibold text-foreground mb-1">
+                                <a href="{% url 'storefront:product_detail' item.product.sku %}" class="hover:text-cyan">
+                                    {{ item.product.name }}
+                                </a>
+                            </h3>
+                            <p class="text-sm text-muted-foreground">SKU: {{ item.product.sku }}</p>
+                        </div>
+                        <p class="text-lg font-bold text-cyan">${{ item.product.price }}</p>
+                    </div>
+
+                    <!-- Quantity Controls and Remove Button -->
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center gap-4">
+                            <!-- Quantity Form -->
+                            {% if using_db_cart %}
+                            <form method="post" action="{% url 'storefront:update_cart' item.id %}" class="flex items-center gap-2">
+                                {% csrf_token %}
+                                <label class="text-sm text-muted-foreground">Qty:</label>
+                                <input type="number" 
+                                       name="quantity" 
+                                       value="{{ item.quantity }}" 
+                                       min="1" 
+                                       max="{{ item.product.stock }}"
+                                       class="w-20 px-3 py-1 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent text-center">
+                                <button type="submit" class="px-3 py-1 text-sm bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors">
+                                    Update
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="{% url 'storefront:update_cart_session' %}" class="flex items-center gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="sku" value="{{ item.product.sku }}">
+                                <label class="text-sm text-muted-foreground">Qty:</label>
+                                <input type="number" 
+                                       name="quantity" 
+                                       value="{{ item.quantity }}" 
+                                       min="1" 
+                                       max="{{ item.product.stock }}"
+                                       class="w-20 px-3 py-1 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent text-center">
+                                <button type="submit" class="px-3 py-1 text-sm bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors">
+                                    Update
+                                </button>
+                            </form>
+                            {% endif %}
+
+                            {% if item.product.stock <= item.product.reorder_threshold %}
+                            <span class="text-xs text-orange-500">Only {{ item.product.stock }} left!</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Remove Button -->
+                        {% if using_db_cart %}
+                        <a href="{% url 'storefront:remove_from_cart' item.id %}" 
+                           class="text-sm text-red-600 hover:text-red-700 flex items-center gap-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            Remove
+                        </a>
+                        {% else %}
+                        <a href="{% url 'storefront:remove_from_cart_session' %}?sku={{ item.product.sku }}" 
+                           class="text-sm text-red-600 hover:text-red-700 flex items-center gap-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            Remove
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Subtotal -->
+                    <div class="mt-3 pt-3 border-t border-border">
+                        <p class="text-sm text-muted-foreground">
+                            Subtotal: <span class="font-semibold text-foreground">${{ item.subtotal }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Continue Shopping Button -->
+            <div class="pt-4">
+                <a href="{% url 'storefront:products' %}" class="inline-flex items-center gap-2 text-cyan hover:text-cyan/80 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    Continue Shopping
+                </a>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+            <div class="bg-card border border-border rounded-lg p-6 sticky top-20">
+                <h2 class="text-xl font-semibold text-foreground mb-4">Order Summary</h2>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Subtotal</span>
+                        <span class="font-medium text-foreground">${{ total }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Shipping</span>
+                        <span class="font-medium text-green-600">FREE</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Tax</span>
+                        <span class="font-medium text-foreground">Calculated at checkout</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-border pt-4 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-lg font-semibold text-foreground">Total</span>
+                        <span class="text-2xl font-bold text-cyan">${{ total }}</span>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'storefront:checkout' %}" 
+                   class="block w-full px-6 py-3 bg-cyan text-white text-center font-medium rounded-lg hover:bg-cyan/90 transition-colors mb-3">
+                    Proceed to Checkout
+                </a>
+                {% else %}
+                <a href="{% url 'users:login' %}?next={% url 'storefront:checkout' %}" 
+                   class="block w-full px-6 py-3 bg-cyan text-white text-center font-medium rounded-lg hover:bg-cyan/90 transition-colors mb-3">
+                    Login to Checkout
+                </a>
+                {% endif %}
+
+                <!-- Security Badges -->
+                <div class="pt-4 border-t border-border">
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i>
+                        <span>Secure Checkout</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty Cart State -->
+    <div class="bg-card border border-border rounded-lg p-12 text-center">
+        <i data-lucide="shopping-cart" class="w-24 h-24 text-muted-foreground mx-auto mb-6"></i>
+        <h2 class="text-2xl font-semibold text-foreground mb-2">Your cart is empty</h2>
+        <p class="text-muted-foreground mb-6">Looks like you haven't added anything to your cart yet.</p>
+        <a href="{% url 'storefront:products' %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            Start Shopping
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
