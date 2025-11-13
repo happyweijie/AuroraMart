@@ -39,4 +39,5 @@ db.sqlite3-journal
 Thumbs.db
 
 # ml models
+auroramart/admin_panel/mlmodels/*.joblib
 *.joblib
