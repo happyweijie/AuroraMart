@@ -1,29 +1,124 @@
 {% extends "storefront_base.html" %}
 
 {% block page_content %}
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-foreground mb-2">
-                {% if category_name %}{{ category_name }}{% else %}All Products{% endif %}
-            </h1>
-            <p class="text-sm text-muted-foreground">
-                Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
-            </p>
+<div class="flex gap-6">
+    <!-- Filter Sidebar -->
+    <aside class="w-64 flex-shrink-0 space-y-6">
+        <div class="bg-card border border-border rounded-lg p-6 sticky top-20">
+            <h2 class="text-lg font-semibold text-foreground mb-4">Filters</h2>
+            
+            <form id="filterForm" method="get" action="{% if category_slug %}{% url 'storefront:category' category_slug %}{% else %}{% url 'storefront:products' %}{% endif %}" class="space-y-6">
+                <!-- Preserve search query -->
+                {% if search_query %}
+                <input type="hidden" name="q" value="{{ search_query }}">
+                {% endif %}
+                
+                <!-- Category Filter (only show on All Products page) -->
+                {% if all_categories and not category_slug %}
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">Category</label>
+                    <select name="category" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent text-sm">
+                        <option value="">All Categories</option>
+                        {% for category in all_categories %}
+                        <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                
+                <!-- Price Range Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">Price Range</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-muted-foreground">$</span>
+                            <input type="number" 
+                                   name="min_price" 
+                                   value="{{ min_price }}"
+                                   placeholder="Min" 
+                                   min="0" 
+                                   step="0.01"
+                                   class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent text-sm">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-muted-foreground">$</span>
+                            <input type="number" 
+                                   name="max_price" 
+                                   value="{{ max_price }}"
+                                   placeholder="Max" 
+                                   min="0" 
+                                   step="0.01"
+                                   class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent text-sm">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rating Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">Minimum Rating</label>
+                    <div class="space-y-2">
+                        {% for rating in "54321" %}
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" 
+                                   name="rating" 
+                                   value="{{ rating }}" 
+                                   {% if min_rating == rating %}checked{% endif %}
+                                   class="w-4 h-4 text-cyan focus:ring-cyan">
+                            <div class="flex items-center gap-1">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= rating|add:"0" %}
+                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                                    {% else %}
+                                        <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="text-sm text-muted-foreground ml-1">& Up</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Filter Buttons -->
+                <div class="flex gap-2 pt-4 border-t border-border">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-cyan text-white text-sm font-medium rounded-lg hover:bg-cyan/90 transition-colors">
+                        Apply Filters
+                    </button>
+                    <a href="{% if category_slug %}{% url 'storefront:category' category_slug %}{% else %}{% url 'storefront:products' %}{% endif %}" 
+                       class="px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                        Clear
+                    </a>
+                </div>
+            </form>
         </div>
-        
-        <!-- Sort Dropdown -->
-        <div class="flex items-center gap-2">
-            <label for="sort" class="text-sm text-muted-foreground">Sort by:</label>
-            <select id="sort" onchange="window.location.href='?sort=' + this.value" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
-                <option value="rating" {% if request.GET.sort == 'rating' or not request.GET.sort %}selected{% endif %}>Highest Rated</option>
-                <option value="price-low" {% if request.GET.sort == 'price-low' %}selected{% endif %}>Price: Low to High</option>
-                <option value="price-high" {% if request.GET.sort == 'price-high' %}selected{% endif %}>Price: High to Low</option>
-                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
-            </select>
+    </aside>
+    
+    <!-- Main Content -->
+    <div class="flex-1 space-y-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-foreground mb-2">
+                    {% if category_name %}{{ category_name }}{% else %}All Products{% endif %}
+                </h1>
+                <p class="text-sm text-muted-foreground">
+                    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
+                </p>
+            </div>
+            
+            <!-- Sort Dropdown -->
+            <div class="flex items-center gap-2">
+                <label for="sort" class="text-sm text-muted-foreground">Sort by:</label>
+                <select id="sort" onchange="updateSort(this.value)" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+                    <option value="rating" {% if sort_by == 'rating' or not sort_by %}selected{% endif %}>Highest Rated</option>
+                    <option value="price-low" {% if sort_by == 'price-low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price-high" {% if sort_by == 'price-high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                </select>
+            </div>
         </div>
-    </div>
     
     <!-- Products Grid -->
     {% if page_obj %}
@@ -103,14 +198,14 @@
     <div class="flex items-center justify-center gap-2 mt-8">
         <!-- First Page -->
         {% if page_obj.has_previous %}
-        <a href="?page=1{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+        <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&rating={{ min_rating }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <i data-lucide="chevrons-left" class="w-4 h-4"></i>
         </a>
         {% endif %}
         
         <!-- Previous Page -->
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&rating={{ min_rating }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
         </a>
         {% else %}
@@ -124,13 +219,13 @@
             {% if page_obj.number == num %}
             <span class="px-4 py-2 bg-cyan text-white rounded-lg font-medium">{{ num }}</span>
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">{{ num }}</a>
+            <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&rating={{ min_rating }}{% endif %}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">{{ num }}</a>
             {% endif %}
         {% endfor %}
         
         <!-- Next Page -->
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&rating={{ min_rating }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </a>
         {% else %}
@@ -141,7 +236,7 @@
         
         <!-- Last Page -->
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&rating={{ min_rating }}{% endif %}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <i data-lucide="chevrons-right" class="w-4 h-4"></i>
         </a>
         {% endif %}
@@ -162,5 +257,15 @@
         </p>
     </div>
     {% endif %}
+    </div>
 </div>
+
+<!-- JavaScript for sorting with filters -->
+<script>
+function updateSort(sortValue) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sortValue);
+    window.location.href = url.toString();
+}
+</script>
 {% endblock %}

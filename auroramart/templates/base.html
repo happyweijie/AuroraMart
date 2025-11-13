@@ -47,8 +47,17 @@
     <!-- Alpine.js for interactive components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <!-- Lucide Icons (matching your wireframe) -->
+    <!-- Lucide Icons (standard library) -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Define Lab Icons manually as SVG strings -->
+    <script>
+        // Lab icons SVG definitions from @lucide/lab
+        window.labIcons = {
+            'coat-hanger': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="1.5"/><path d="M12 6v3"/><path d="M19 17H5a2 2 0 0 1-2-2v-1l7-7a2 2 0 0 1 2.828 0l7 7v1a2 2 0 0 1-2 2z"/></svg>',
+            'trousers': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v7c0 .83-.67 1.5-1.5 1.5h-9C6.67 12.5 6 11.83 6 11V4z"/><path d="M7 12.5l-1 8h4l1-8"/><path d="M17 12.5l1 8h-4l-1-8"/><line x1="10" y1="20.5" x2="10" y2="22"/><line x1="14" y1="20.5" x2="14" y2="22"/></svg>'
+        };
+    </script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -108,7 +117,50 @@
     
     <!-- Initialize Lucide Icons -->
     <script>
-        lucide.createIcons();
+        function renderLabIcon(iconName, element) {
+            if (!window.labIcons || !window.labIcons[iconName]) {
+                console.warn('Lab icon not found:', iconName);
+                return;
+            }
+            
+            // Create a temporary div to parse the SVG string
+            const temp = document.createElement('div');
+            temp.innerHTML = window.labIcons[iconName].trim();
+            const svg = temp.firstChild;
+            
+            // Copy classes from the original element and add lucide class
+            const classes = element.className ? element.className.split(' ') : [];
+            classes.push('lucide', 'lucide-' + iconName);
+            svg.setAttribute('class', classes.join(' '));
+            
+            // Replace the element with the SVG
+            element.replaceWith(svg);
+        }
+        
+        function initializeAllIcons() {
+            // Initialize standard lucide icons first
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+            
+            // Manually render lab icons
+            const coatHangerElements = document.querySelectorAll('[data-lucide="coat-hanger"]');
+            coatHangerElements.forEach(el => {
+                renderLabIcon('coat-hanger', el);
+            });
+            
+            const trousersElements = document.querySelectorAll('[data-lucide="trousers"]');
+            trousersElements.forEach(el => {
+                renderLabIcon('trousers', el);
+            });
+        }
+        
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAllIcons);
+        } else {
+            initializeAllIcons();
+        }
     </script>
     
     {% block extra_js %}{% endblock %}
