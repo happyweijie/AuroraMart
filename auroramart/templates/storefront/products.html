@@ -179,10 +179,19 @@
                 
                 <!-- Action Button -->
                 {% if product.stock > 0 %}
-                <a href="{% url 'storefront:product_detail' product.sku %}" 
-                   class="block w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors font-medium">
-                    View Details
-                </a>
+                <div class="flex gap-2">
+                    <a href="{% url 'storefront:product_detail' product.sku %}" 
+                       class="flex-1 px-4 py-2 bg-white border-2 border-cyan text-cyan text-center rounded-lg hover:bg-cyan hover:text-white transition-colors font-medium">
+                        View
+                    </a>
+                    <form method="post" action="{% url 'storefront:add_to_cart' product.sku %}" class="flex-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors font-medium">
+                            <i data-lucide="shopping-cart" class="w-4 h-4 inline-block"></i>
+                        </button>
+                    </form>
+                </div>
                 {% else %}
                 <button disabled class="block w-full px-4 py-2 bg-gray-300 text-gray-500 text-center rounded-lg cursor-not-allowed font-medium">
                     Out of Stock

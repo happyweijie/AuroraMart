@@ -84,10 +84,15 @@
             <!-- Action Buttons -->
             <div class="flex gap-4 pt-4">
                 {% if product.stock > 0 %}
-                    <button class="flex-1 px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center justify-center gap-2">
-                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                        Add to Cart
-                    </button>
+                    <form method="post" action="{% url 'storefront:add_to_cart' product.sku %}" class="flex-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="next" value="{% url 'storefront:product_detail' product.sku %}">
+                        <button type="submit" class="w-full px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                            Add to Cart
+                        </button>
+                    </form>
                 {% else %}
                     <button disabled class="flex-1 px-6 py-3 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed">
                         Out of Stock
