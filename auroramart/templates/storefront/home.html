@@ -1,4 +1,5 @@
 {% extends "storefront_base.html" %}
+{% load category_icons %}
 
 {% block page_content %}
 <div class="space-y-8">
@@ -16,38 +17,23 @@
     <!-- Featured Categories -->
     <div>
         <h2 class="text-2xl font-semibold text-foreground mb-6">Shop by Category</h2>
+        {% if categories %}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <a href="{% url 'storefront:category' 'electronics' %}" 
+            {% for category in categories %}
+            <a href="{% url 'storefront:category' category.slug %}" 
                class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="smartphone" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">Electronics</h3>
+                <i data-lucide="{{ category|category_icon }}" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
+                <h3 class="text-sm font-medium text-foreground">{{ category.name }}</h3>
             </a>
-            <a href="{% url 'storefront:category' 'fashion' %}" 
-               class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="shirt" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">Fashion</h3>
-            </a>
-            <a href="{% url 'storefront:category' 'home-kitchen' %}" 
-               class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="home" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">Home & Kitchen</h3>
-            </a>
-            <a href="{% url 'storefront:category' 'books' %}" 
-               class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="book-open" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">Books</h3>
-            </a>
-            <a href="{% url 'storefront:category' 'health' %}" 
-               class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="heart-pulse" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">Health</h3>
-            </a>
-            <a href="{% url 'storefront:category' 'sports' %}" 
-               class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="dumbbell" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">Sports</h3>
-            </a>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="bg-card border border-border rounded-lg p-12 text-center">
+            <i data-lucide="package" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+            <h3 class="text-lg font-medium text-foreground mb-2">No Categories Available</h3>
+            <p class="text-sm text-muted-foreground">Check back soon for product categories</p>
+        </div>
+        {% endif %}
     </div>
     
      <!-- Featured Products -->

@@ -56,16 +56,13 @@
                                 x-transition:leave="transition ease-in duration-75"
                                 x-transition:leave-start="transform opacity-100 scale-100"
                                 x-transition:leave-end="transform opacity-0 scale-95"
-                                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-20"
-                                style="display: none;"> {# Important for initial hide without Alpine.js #}
+                                x-cloak
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
+                                style="display: none;">
                                 
-                                <a href="#" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
+                                <a href="{% url 'users:profile' %}" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
                                     <i data-lucide="user" class="inline-block w-4 h-4 mr-2 text-muted-foreground"></i>
                                     Profile
-                                </a>
-                                <a href="#" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
-                                    <i data-lucide="settings" class="inline-block w-4 h-4 mr-2 text-muted-foreground"></i>
-                                    Settings
                                 </a>
                                 
                                 {# Separator #}
@@ -98,24 +95,13 @@
                 <a href="{% url 'storefront:products' %}" class="text-sm font-medium text-foreground hover:text-cyan whitespace-nowrap">
                     All Products
                 </a>
-                <a href="{% url 'storefront:category' 'accessories' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
-                    Accessories
-                </a>
-                <a href="{% url 'storefront:category' 'tops' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
-                    Tops
-                </a>
-                <a href="{% url 'storefront:category' 'outerwear' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
-                    Outerwear
-                </a>
-                <a href="{% url 'storefront:category' 'footwear' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
-                    Footwear
-                </a>
-                <a href="{% url 'storefront:category' 'bottoms' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
-                    Bottoms
-                </a>
-                <a href="{% url 'storefront:category' 'textbooks' %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
-                    Textbooks
-                </a>
+                {% if nav_categories %}
+                    {% for category in nav_categories %}
+                    <a href="{% url 'storefront:category' category.slug %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                        {{ category.name }}
+                    </a>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
