@@ -44,17 +44,6 @@ class Customer(models.Model):
         ('Doctorate', 'Doctorate'),
     ]
 
-    CATEGORY_CHOICES = [
-        ('Electronics', 'Electronics'),
-        ('Fashion - Men', 'Fashion - Men'),
-        ('Fashion - Women', 'Fashion - Women'),
-        ('Home & Kitchen', 'Home & Kitchen'),
-        ('Beauty & Personal Care', 'Beauty & Personal Care'),
-        ('Sports & Outdoors', 'Sports & Outdoors'),
-        ('Books', 'Books'),
-        ('Groceries & Gourmet', 'Groceries & Gourmet'),
-    ]
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="customer_profile")
     age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
     household_size = models.PositiveIntegerField(validators=[MinValueValidator(1)])
@@ -68,8 +57,7 @@ class Customer(models.Model):
         max_length=100,
         blank=True,
         null=True,
-        choices=CATEGORY_CHOICES,
-        editable=True, # set to false later
+        editable=True,
     )
     preferred_category_fk = models.ForeignKey(
         'storefront.Category',
