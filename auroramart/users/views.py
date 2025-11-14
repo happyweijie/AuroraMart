@@ -4,6 +4,8 @@ from .models import User, Customer
 from .forms import CustomerRegistrationForm, CustomerLoginForm, PasswordChangeForm
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from mlservices.predict_preferred_category import predict_preferred_category
+from storefront.models import Category
 
 # Create your views here.
 def user_login(request):
@@ -43,6 +45,34 @@ def register(request):
         form = CustomerRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
+
+            # populate preferred category using ML model
+            customer = Customer.objects.get(user=user)
+
+            # set up customer's preferred category prediction
+            preferred_category = predict_preferred_category({
+                'age': customer.age,
+                'household_size': customer.household_size,
+                'has_children': int(customer.has_children),
+                'monthly_income_sgd': float(customer.monthly_income_sgd),
+                'gender': customer.gender,
+                'employment_status': customer.employment_status,
+                'occupation': customer.occupation,
+                'education': customer.education
+            })[0]
+
+            print(f"Predicted preferred category: {preferred_category}")
+            
+            # set preferred category and fk
+            customer.preferred_category = preferred_category
+            # find fk for preferred category
+            try:
+                category_obj = Category.objects.get(name=preferred_category)
+                customer.preferred_category_fk = category_obj
+            except Category.DoesNotExist:
+                customer.preferred_category_fk = None 
+            customer.save()
+            
             login(request, user)
             messages.success(request, 'Account created successfully! Welcome to AuroraMart.')
             return redirect('storefront:home')
