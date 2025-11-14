@@ -71,6 +71,13 @@ class Customer(models.Model):
         choices=CATEGORY_CHOICES,
         editable=True, # set to false later
     )
+    preferred_category_fk = models.ForeignKey(
+        'storefront.Category',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customers_preferred',
+    )
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     
