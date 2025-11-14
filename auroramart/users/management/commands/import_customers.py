@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 
 from users.models import Customer
+from storefront.models import Category
 
 User = get_user_model()
 
@@ -51,6 +52,7 @@ class Command(BaseCommand):
 				has_children = bool(int(row['has_children']))
 				monthly_income_sgd = Decimal(row['monthly_income_sgd'])
 				preferred_category = row['preferred_category'].strip()
+				preferred_category_fk = Category.objects.filter(name=preferred_category).first()
 				
 				# Normalize employment status to match model choices
 				employment_map = {
@@ -93,6 +95,7 @@ class Command(BaseCommand):
 						'has_children': has_children,
 						'monthly_income_sgd': monthly_income_sgd,
 						'preferred_category': preferred_category,
+						'preferred_category_fk': preferred_category_fk,
 					}
 				)
 				
