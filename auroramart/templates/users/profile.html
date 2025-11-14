@@ -69,7 +69,7 @@
                 </div>
                 {% if customer.preferred_category_fk %}
                     <div>
-                        <label class="text-sm font-medium text-muted-foreground">Preferred Category</label>
+                        <label class="text-sm font-medium text-muted-foreground">Products For You</label>
                         <p class="text-foreground font-medium">
                             <a href="{% url 'storefront:category' customer.preferred_category_fk.slug %}">{{ customer.preferred_category_fk.name }}</a>
                         </p>
