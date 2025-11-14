@@ -1,0 +1,126 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Order #{{ order.id }}{% endblock %}
+{% block page_description %}Order details and status management{% endblock %}
+
+{% block page_content %}
+<div class="max-w-6xl">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <nav class="flex items-center gap-2 text-sm text-muted-foreground">
+            <a href="{% url 'admin_panel:dashboard' %}" class="hover:text-foreground">Dashboard</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'admin_panel:orders' %}" class="hover:text-foreground">Orders</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-foreground">Order #{{ order.id }}</span>
+        </nav>
+    </div>
+
+    <!-- Order Header -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-semibold text-foreground mb-2">Order #{{ order.id }}</h2>
+                <p class="text-sm text-muted-foreground">Placed on {{ order.created_at|date:"F d, Y h:i A" }}</p>
+            </div>
+            <div class="text-right">
+                <span class="px-3 py-1 text-sm rounded-full 
+                    {% if order.status == 'delivered' %}bg-green-100 text-green-700
+                    {% elif order.status == 'shipped' %}bg-blue-100 text-blue-700
+                    {% elif order.status == 'processing' %}bg-yellow-100 text-yellow-700
+                    {% elif order.status == 'cancelled' %}bg-red-100 text-red-700
+                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <h3 class="text-sm font-medium text-muted-foreground mb-2">Customer Information</h3>
+                <div class="space-y-1">
+                    <p class="text-sm text-foreground"><strong>Username:</strong> {{ order.customer.user.username }}</p>
+                    <p class="text-sm text-foreground"><strong>Email:</strong> {{ order.customer.user.email }}</p>
+                    <p class="text-sm text-foreground"><strong>Name:</strong> {{ order.customer.user.get_full_name|default:"—" }}</p>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-muted-foreground mb-2">Shipping Address</h3>
+                <p class="text-sm text-foreground">{{ order.shipping_address|default:"Not provided" }}</p>
+            </div>
+        </div>
+
+        <!-- Status Update Form -->
+        <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-semibold text-foreground mb-4">Update Order Status</h3>
+            <form method="post" class="flex items-end gap-4">
+                {% csrf_token %}
+                <div class="flex-1 max-w-xs">
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Status
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" 
+                        class="px-6 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
+                    Update Status
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4">Order Items</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">SKU</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quantity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Unit Price</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in order_items %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-foreground">{{ item.product.name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-mono text-muted-foreground">{{ item.product.sku }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-foreground">{{ item.quantity }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-foreground">${{ item.unit_price }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <span class="text-sm font-medium text-foreground">${% widthratio item.unit_price 1 item.quantity %}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-muted-foreground">No items in this order</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-gray-50 border-t border-gray-200">
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-right text-sm font-medium text-foreground">Total:</td>
+                        <td class="px-6 py-4 text-right text-lg font-semibold text-foreground">${{ order.total_price }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -12,46 +12,86 @@
             <div class="w-12 h-12 bg-gradient-to-br from-cyan to-blue-500 rounded-lg flex items-center justify-center">
                 <i data-lucide="dollar-sign" class="w-6 h-6 text-white"></i>
             </div>
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+12.5%</span>
         </div>
-        <h3 class="text-2xl font-semibold text-foreground mb-1">${{ total_revenue|default:"0.00" }}</h3>
-        <p class="text-sm text-muted-foreground">Total Revenue</p>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">${{ total_revenue|floatformat:2|default:"0.00" }}</h3>
+        <p class="text-sm text-muted-foreground">Total Revenue (Delivered)</p>
     </div>
     
-    <!-- Total Orders -->
+    <!-- Orders Today -->
     <div class="bg-white rounded-lg border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <i data-lucide="shopping-cart" class="w-6 h-6 text-white"></i>
+                <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
             </div>
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+8.2%</span>
         </div>
-        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ total_orders|default:"0" }}</h3>
-        <p class="text-sm text-muted-foreground">Total Orders</p>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ orders_today|default:"0" }}</h3>
+        <p class="text-sm text-muted-foreground">Orders Today</p>
+        <p class="text-xs text-muted-foreground mt-1">{{ orders_this_week }} this week</p>
     </div>
     
-    <!-- Total Customers -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                <i data-lucide="users" class="w-6 h-6 text-white"></i>
-            </div>
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+15.3%</span>
-        </div>
-        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ total_customers|default:"0" }}</h3>
-        <p class="text-sm text-muted-foreground">Total Customers</p>
-    </div>
-    
-    <!-- Total Products -->
+    <!-- Average Order Value -->
     <div class="bg-white rounded-lg border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <i data-lucide="package" class="w-6 h-6 text-white"></i>
+                <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
             </div>
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">+5.1%</span>
         </div>
-        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ total_products|default:"0" }}</h3>
-        <p class="text-sm text-muted-foreground">Total Products</p>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">${{ aov|floatformat:2|default:"0.00" }}</h3>
+        <p class="text-sm text-muted-foreground">Average Order Value</p>
+    </div>
+    
+    <!-- Attach Rate -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-semibold text-foreground mb-1">{{ attach_rate|floatformat:1|default:"0.0" }}%</h3>
+        <p class="text-sm text-muted-foreground">Attach Rate</p>
+        <p class="text-xs text-muted-foreground mt-1">Orders with >1 item</p>
+    </div>
+</div>
+
+<!-- Secondary Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Total Orders -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="shopping-cart" class="w-5 h-5 text-purple-600"></i>
+            </div>
+            <div>
+                <p class="text-lg font-semibold text-foreground">{{ total_orders|default:"0" }}</p>
+                <p class="text-xs text-muted-foreground">Total Orders</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Customers -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="users" class="w-5 h-5 text-orange-600"></i>
+            </div>
+            <div>
+                <p class="text-lg font-semibold text-foreground">{{ total_customers|default:"0" }}</p>
+                <p class="text-xs text-muted-foreground">Total Customers</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Count -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 {% if low_stock_count > 0 %}bg-red-100{% else %}bg-green-100{% endif %} rounded-lg flex items-center justify-center">
+                <i data-lucide="alert-triangle" class="w-5 h-5 {% if low_stock_count > 0 %}text-red-600{% else %}text-green-600{% endif %}"></i>
+            </div>
+            <div>
+                <p class="text-lg font-semibold {% if low_stock_count > 0 %}text-red-600{% else %}text-foreground{% endif %}">{{ low_stock_count|default:"0" }}</p>
+                <p class="text-xs text-muted-foreground">Low Stock Products</p>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -1,0 +1,92 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Recommendation Governance{% endblock %}
+{% block page_description %}Configure and monitor ML-based product recommendations{% endblock %}
+
+{% block page_content %}
+<!-- Header Actions -->
+<div class="mb-6">
+    <h2 class="text-xl font-semibold text-foreground mb-2">Recommendation Placements</h2>
+    <p class="text-sm text-muted-foreground">Configure where and how ML recommendations appear on your storefront</p>
+</div>
+
+<!-- Placements Table -->
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Slug</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Placement</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Strategy</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for placement in placements %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-mono text-foreground">{{ placement.slug }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-foreground">{{ placement.title }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-foreground">{{ placement.get_placement_display }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-muted-foreground">{{ placement.get_strategy_display }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if placement.is_active %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Active</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="placement_id" value="{{ placement.id }}">
+                            <button type="submit" name="toggle_active" 
+                                    class="{% if placement.is_active %}text-orange-600 hover:text-orange-700{% else %}text-cyan hover:text-cyan/80{% endif %} transition-colors"
+                                    title="{% if placement.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                {% if placement.is_active %}
+                                <i data-lucide="toggle-right" class="w-5 h-5"></i>
+                                {% else %}
+                                <i data-lucide="toggle-left" class="w-5 h-5"></i>
+                                {% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="text-muted-foreground">
+                            <i data-lucide="settings" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            <p>No recommendation placements found</p>
+                            <p class="text-xs mt-2">Run: <code class="bg-gray-100 px-2 py-1 rounded">python manage.py seed_recommendation_placements</code></p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Info Card -->
+<div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="flex items-start gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
+        <div class="text-sm text-blue-800">
+            <p class="font-medium mb-1">About Recommendation Placements</p>
+            <p>These configurations control where ML-based recommendations appear on your storefront. When a placement is inactive, that recommendation section will be hidden from customers.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

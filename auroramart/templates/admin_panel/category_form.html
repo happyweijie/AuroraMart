@@ -1,0 +1,99 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}{{ form_title }}{% endblock %}
+{% block page_description %}{{ form_title }}{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <nav class="flex items-center gap-2 text-sm text-muted-foreground">
+            <a href="{% url 'admin_panel:dashboard' %}" class="hover:text-foreground">Dashboard</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'admin_panel:categories' %}" class="hover:text-foreground">Categories</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-foreground">{{ form_title }}</span>
+        </nav>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Display form errors -->
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <ul class="list-disc list-inside text-sm text-red-700">
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Form Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Category Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Slug -->
+                <div>
+                    <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Slug <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.slug }}
+                    {% if form.slug.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.slug.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-muted-foreground">URL-friendly version (e.g., electronics, fashion-men)</p>
+                </div>
+                
+                <!-- Parent -->
+                <div>
+                    <label for="{{ form.parent.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Parent Category
+                    </label>
+                    {{ form.parent }}
+                    {% if form.parent.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.parent.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-muted-foreground">Leave empty for a top-level category</p>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'admin_panel:categories' %}" 
+                   class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
+                    {{ submit_label }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
