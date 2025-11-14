@@ -1,0 +1,83 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Category Management{% endblock %}
+{% block page_description %}Manage product categories{% endblock %}
+
+{% block page_content %}
+<!-- Header Actions -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-xl font-semibold text-foreground">Categories</h2>
+        <p class="text-sm text-muted-foreground">Organize your product catalog</p>
+    </div>
+    <a href="{% url 'admin_panel:category_create' %}" 
+       class="px-4 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span>Add Category</span>
+    </a>
+</div>
+
+<!-- Categories Table -->
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Slug</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Parent</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Products</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for category in categories %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-foreground">{{ category.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-mono text-muted-foreground">{{ category.slug }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if category.parent %}
+                        <span class="text-sm text-foreground">{{ category.parent.name }}</span>
+                        {% else %}
+                        <span class="text-sm text-muted-foreground">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-muted-foreground line-clamp-2 max-w-xs">
+                            {{ category.description|default:"—"|truncatewords:15 }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-foreground">{{ category.products.count }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'admin_panel:category_update' category.id %}" 
+                           class="text-cyan hover:text-cyan/80 transition-colors" title="Edit">
+                            <i data-lucide="edit" class="w-4 h-4"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="text-muted-foreground">
+                            <i data-lucide="folder-tree" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            <p>No categories found</p>
+                            <a href="{% url 'admin_panel:category_create' %}" class="text-cyan hover:underline mt-2 inline-block">
+                                Create your first category
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,182 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}{{ form_title }}{% endblock %}
+{% block page_description %}{{ form_title }}{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <nav class="flex items-center gap-2 text-sm text-muted-foreground">
+            <a href="{% url 'admin_panel:dashboard' %}" class="hover:text-foreground">Dashboard</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'admin_panel:customers' %}" class="hover:text-foreground">Customers</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-foreground">{{ form_title }}</span>
+        </nav>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4">Account Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <span class="text-sm text-muted-foreground">Username:</span>
+                <span class="text-sm font-medium text-foreground ml-2">{{ customer.user.username }}</span>
+            </div>
+            <div>
+                <span class="text-sm text-muted-foreground">Email:</span>
+                <span class="text-sm font-medium text-foreground ml-2">{{ customer.user.email }}</span>
+            </div>
+            <div>
+                <span class="text-sm text-muted-foreground">Name:</span>
+                <span class="text-sm font-medium text-foreground ml-2">{{ customer.user.get_full_name|default:"—" }}</span>
+            </div>
+            <div>
+                <span class="text-sm text-muted-foreground">Total Orders:</span>
+                <span class="text-sm font-medium text-foreground ml-2">{{ customer.orders.count }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4">Demographics</h3>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Display form errors -->
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <ul class="list-disc list-inside text-sm text-red-700">
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Form Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Age -->
+                <div>
+                    <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Age <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.age }}
+                    {% if form.age.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.age.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Gender -->
+                <div>
+                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Gender <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Household Size -->
+                <div>
+                    <label for="{{ form.household_size.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Household Size <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.household_size }}
+                    {% if form.household_size.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.household_size.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Has Children -->
+                <div>
+                    <label for="{{ form.has_children.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Has Children
+                    </label>
+                    <div class="flex items-center gap-2">
+                        {{ form.has_children }}
+                        <label for="{{ form.has_children.id_for_label }}" class="text-sm text-foreground cursor-pointer">
+                            Customer has children
+                        </label>
+                    </div>
+                    {% if form.has_children.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.has_children.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Monthly Income -->
+                <div>
+                    <label for="{{ form.monthly_income_sgd.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Monthly Income (SGD) <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.monthly_income_sgd }}
+                    {% if form.monthly_income_sgd.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.monthly_income_sgd.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Employment Status -->
+                <div>
+                    <label for="{{ form.employment_status.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Employment Status <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.employment_status }}
+                    {% if form.employment_status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.employment_status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Occupation -->
+                <div>
+                    <label for="{{ form.occupation.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Occupation <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.occupation }}
+                    {% if form.occupation.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.occupation.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Education -->
+                <div>
+                    <label for="{{ form.education.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Education <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.education }}
+                    {% if form.education.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.education.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Preferred Category -->
+                <div>
+                    <label for="{{ form.preferred_category.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Preferred Category
+                    </label>
+                    {{ form.preferred_category }}
+                    {% if form.preferred_category.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.preferred_category.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-muted-foreground">May be set by ML system</p>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'admin_panel:customers' %}" 
+                   class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
+                    {{ submit_label }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

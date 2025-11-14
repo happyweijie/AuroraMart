@@ -1,0 +1,178 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Inventory Management{% endblock %}
+{% block page_description %}Track and manage product stock levels{% endblock %}
+
+{% block page_content %}
+<!-- Header Actions -->
+<div class="mb-6">
+    <h2 class="text-xl font-semibold text-foreground mb-2">Inventory Management</h2>
+    <p class="text-sm text-muted-foreground">Monitor stock levels and update inventory</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Search</label>
+            <input type="text" name="q" value="{{ search_query }}" 
+                   placeholder="Search products..."
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Filter</label>
+            <select name="filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan">
+                <option value="">All Products</option>
+                <option value="low_stock" {% if selected_filter == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                <option value="out_of_stock" {% if selected_filter == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button type="submit" class="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors">
+                Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Bulk Update Form -->
+<div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+    <h3 class="text-lg font-semibold text-foreground mb-4">Bulk Stock Update</h3>
+    <form method="post" id="bulk-update-form">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+                <label for="{{ form.products.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Select Products
+                </label>
+                <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
+                    {% for checkbox in form.products %}
+                    <div class="flex items-center gap-2">
+                        {{ checkbox.tag }}
+                        <label for="{{ checkbox.id_for_label }}" class="text-sm text-foreground cursor-pointer">
+                            {{ checkbox.choice_label }}
+                        </label>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-muted-foreground">No products available</p>
+                    {% endfor %}
+                </div>
+                {% if form.products.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.products.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <label for="{{ form.stock_adjustment.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Stock Adjustment
+                </label>
+                {{ form.stock_adjustment }}
+                {% if form.stock_adjustment.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.stock_adjustment.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-xs text-muted-foreground">
+                    Enter a positive number to add stock, negative to subtract. Example: +50 or -10
+                </p>
+            </div>
+        </div>
+        <button type="submit" name="bulk_update" 
+                class="px-6 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
+            Update Stock
+        </button>
+    </form>
+</div>
+
+<!-- Inventory Table -->
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">SKU</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Product</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Current Stock</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Reorder Threshold</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for product in page_obj %}
+                <tr class="{% if product.stock <= product.reorder_threshold %}bg-orange-50 hover:bg-orange-100{% else %}hover:bg-gray-50{% endif %}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-mono text-foreground">{{ product.sku }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-foreground">{{ product.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-foreground">{{ product.category.name }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium {% if product.stock == 0 %}text-red-600{% elif product.stock <= product.reorder_threshold %}text-orange-600{% else %}text-foreground{% endif %}">
+                            {{ product.stock }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-muted-foreground">{{ product.reorder_threshold }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if product.stock == 0 %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Out of Stock</span>
+                        {% elif product.stock <= product.reorder_threshold %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700">Low Stock</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">In Stock</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'admin_panel:product_update' product.sku %}" 
+                           class="text-cyan hover:text-cyan/80 transition-colors" title="Edit">
+                            <i data-lucide="edit" class="w-4 h-4"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center">
+                        <div class="text-muted-foreground">
+                            <i data-lucide="warehouse" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            <p>No products found</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_filter %}&filter={{ selected_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_filter %}&filter={{ selected_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-cyan text-white rounded-lg text-sm">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_filter %}&filter={{ selected_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_filter %}&filter={{ selected_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

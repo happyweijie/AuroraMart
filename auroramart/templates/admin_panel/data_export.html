@@ -1,0 +1,102 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Data Import/Export{% endblock %}
+{% block page_description %}Import and export data in various formats{% endblock %}
+
+{% block page_content %}
+<!-- Header Actions -->
+<div class="mb-6">
+    <h2 class="text-xl font-semibold text-foreground mb-2">Data Export</h2>
+    <p class="text-sm text-muted-foreground">Export your data in CSV format</p>
+</div>
+
+<!-- Export Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Export Products -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-cyan/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="package" class="w-6 h-6 text-cyan"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-foreground">Export Products</h3>
+                <p class="text-sm text-muted-foreground">All product data</p>
+            </div>
+        </div>
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <input type="hidden" name="export_type" value="products">
+            <button type="submit" name="export" 
+                    class="w-full px-4 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export Products CSV</span>
+            </button>
+        </form>
+        <p class="text-xs text-muted-foreground mt-2">
+            Exports: SKU, Name, Category, Price, Stock, Rating, etc.
+        </p>
+    </div>
+    
+    <!-- Export Customers -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="users" class="w-6 h-6 text-purple-500"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-foreground">Export Customers</h3>
+                <p class="text-sm text-muted-foreground">Customer records</p>
+            </div>
+        </div>
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <input type="hidden" name="export_type" value="customers">
+            <button type="submit" name="export" 
+                    class="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export Customers CSV</span>
+            </button>
+        </form>
+        <p class="text-xs text-muted-foreground mt-2">
+            Exports: Username, Email, Demographics, Preferred Category, etc.
+        </p>
+    </div>
+    
+    <!-- Export Orders -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="shopping-cart" class="w-6 h-6 text-green-500"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-foreground">Export Orders</h3>
+                <p class="text-sm text-muted-foreground">Order history</p>
+            </div>
+        </div>
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <input type="hidden" name="export_type" value="orders">
+            <button type="submit" name="export" 
+                    class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export Orders CSV</span>
+            </button>
+        </form>
+        <p class="text-xs text-muted-foreground mt-2">
+            Exports: Order ID, Customer, Status, Total Price, Dates, etc.
+        </p>
+    </div>
+</div>
+
+<!-- Info Card -->
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="flex items-start gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
+        <div class="text-sm text-blue-800">
+            <p class="font-medium mb-1">About Data Export</p>
+            <p>All exports are generated in CSV format and can be opened in Excel, Google Sheets, or any spreadsheet application. Files are timestamped automatically.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
