@@ -47,7 +47,7 @@ def register(request):
             user = form.save()
 
             # populate preferred category using ML model
-            customer = Customer.objects.get(user=user)
+            customer = user.customer_profile
 
             # set up customer's preferred category prediction
             preferred_category = predict_preferred_category({
