@@ -3,7 +3,7 @@ import joblib
 from pathlib import Path
 from django.apps import apps
 
-APP_PATH = Path(apps.get_app_config('adminpanel').path)
+APP_PATH = Path(apps.get_app_config('admin_panel').path)
 
 def load_category_prediction_model():
     model_path = APP_PATH / 'mlmodels' / 'b2c_customers_100.joblib'
