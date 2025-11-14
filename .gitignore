@@ -38,4 +38,8 @@ db.sqlite3-journal
 .DS_Store
 Thumbs.db
 
-/model
+# model
+*.joblib
+
+# csv files
+*.csv
