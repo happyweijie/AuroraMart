@@ -27,6 +27,20 @@ def index(request):
         product_count=Count('products')
     ).distinct().order_by('-product_count', 'name')[:10]
 
+    # for logged in users, we can later personalize featured products based on their preferences
+    if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
+        customer = request.user.customer_profile
+        if customer.preferred_category_fk:
+            preferred_category = customer.preferred_category_fk
+            preferred_products = preferred_category.products.filter(
+                stock__gte=0,
+                is_active=True,
+                archived=False
+            ).order_by('-rating', '-created_at')[:12]
+            if preferred_products.exists():
+                products = preferred_products
+
+
     return render(request, 'storefront/home.html', {
         'featured_products': products,
         'categories': categories_with_products
