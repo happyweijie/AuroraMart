@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from storefront.models import Product, Order
@@ -60,8 +60,16 @@ def log_order_status_change(sender, instance, created, **kwargs):
     """Log order status changes"""
     if not created:
         # Only log status changes, not creation
-        # Check if status actually changed
-        if 'update_fields' in kwargs and 'status' in kwargs['update_fields']:
+        # Determine whether status changed. If `update_fields` is provided use it,
+        # otherwise fall back to the value cached on the instance by `pre_save`.
+        update_fields = kwargs.get('update_fields', None)
+        status_changed = False
+        if update_fields is not None:
+            status_changed = 'status' in update_fields
+        else:
+            status_changed = getattr(instance, '_old_status', None) != getattr(instance, 'status', None)
+
+        if status_changed:
             actor = None
             try:
                 import threading
@@ -78,6 +86,20 @@ def log_order_status_change(sender, instance, created, **kwargs):
                 entity_id=str(instance.id),
                 summary=f'Order #{instance.id} status changed to {instance.get_status_display()}'
             )
+
+
+
+@receiver(pre_save, sender=Order)
+def cache_order_status(sender, instance, **kwargs):
+    """Cache the existing order status on the instance before save so post_save
+    can determine whether the status changed when update_fields isn't provided.
+    """
+    if instance.pk:
+        try:
+            old = Order.objects.get(pk=instance.pk)
+            instance._old_status = old.status
+        except Order.DoesNotExist:
+            instance._old_status = None
 
 
 @receiver(post_save, sender=Customer)
