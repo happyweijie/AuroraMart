@@ -11,8 +11,7 @@ from mlservices.get_recommendations import get_product_recommendations
 
 # Create your views here.
 def index(request):
-    # replace wih ai recommendations later
-    products = Product.objects.filter(
+    featured_products = Product.objects.filter(
         stock__gte=0,
         is_active=True,
         archived=False) \
@@ -28,23 +27,20 @@ def index(request):
         product_count=Count('products')
     ).distinct().order_by('-product_count', 'name')[:10]
 
-    # for logged in users, we can later personalize featured products based on their preferences
+    # for logged in users, include personalize products based on their preferences
     if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
         customer = request.user.customer_profile
         if customer.preferred_category_fk:
             preferred_category = customer.preferred_category_fk
-            preferred_products = preferred_category.products.filter(
-                stock__gte=0,
-                is_active=True,
-                archived=False
-            ).order_by('-rating', '-created_at')[:12]
-            if preferred_products.exists():
-                products = preferred_products
-
+            for_you_products = preferred_category.get_all_products() \
+                .order_by('-rating', '-created_at')[:12]
+    else:
+        for_you_products = None
 
     return render(request, 'storefront/home.html', {
-        'featured_products': products,
-        'categories': categories_with_products
+        'featured_products': featured_products,
+        'categories': categories_with_products,
+        'for_you_products': for_you_products
         })
 
 def products(request):
