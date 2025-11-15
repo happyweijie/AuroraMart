@@ -24,6 +24,10 @@ urlpatterns = [
     path('orders/<int:order_id>/', views.order_detail_view, name='order_detail'),
     path('orders/<int:order_id>/cancel/', views.cancel_order_view, name='cancel_order'),
     
+    # Reviews
+    path('products/<str:sku>/review/', views.review_create_view, name='review_create'),
+    path('reviews/', views.review_list_view, name='review_list'),
+    
     # Watchlist (placeholder)
     path('watchlist/', views.index, name='watchlist'),
 ]

@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from decimal import Decimal
-from .models import Product, Category, Cart, CartItem, Order, OrderItem
-from .forms import CheckoutForm
+from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review
+from .forms import CheckoutForm, ReviewForm
 from mlservices.get_recommendations import get_product_recommendations
 
 # Create your views here.
@@ -28,6 +28,9 @@ def index(request):
     ).distinct().order_by('-product_count', 'name')[:10]
 
     # for logged in users, include personalize products based on their preferences
+    trending_products = None
+    for_you_products = None
+    
     if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
         customer = request.user.customer_profile
         if customer.preferred_category_fk:
@@ -35,12 +38,20 @@ def index(request):
             for_you_products = preferred_category.get_all_products() \
                 .order_by('-rating', '-created_at')[:12]
     else:
-        for_you_products = None
+        # For non-logged-in users, show trending products (highest rated or most reviewed)
+        trending_products = Product.objects.filter(
+            stock__gte=0,
+            is_active=True,
+            archived=False
+        ).annotate(
+            review_count=Count('reviews', filter=Q(reviews__is_approved=True))
+        ).order_by('-rating', '-review_count', '-created_at')[:12]
 
     return render(request, 'storefront/home.html', {
         'featured_products': featured_products,
         'categories': categories_with_products,
-        'for_you_products': for_you_products
+        'for_you_products': for_you_products,
+        'trending_products': trending_products,
         })
 
 def products(request):
@@ -205,6 +216,36 @@ def product_detail(request, sku):
     
     # Calculate review statistics
     total_reviews = reviews.count()
+    if total_reviews > 0:
+        average_rating = sum(review.rating for review in reviews) / total_reviews
+        # Update product rating if different (only if there are approved reviews)
+        if product.rating != average_rating:
+            product.rating = round(average_rating, 2)
+            product.save()
+    else:
+        average_rating = 0.0
+    
+    # Check if user can review (has purchased and hasn't reviewed yet)
+    can_review = False
+    has_purchased = False
+    has_reviewed = False
+    
+    if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
+        customer = request.user.customer_profile
+        # Check if user has purchased this product
+        has_purchased = OrderItem.objects.filter(
+            order__customer=customer,
+            order__status='delivered',
+            product=product
+        ).exists()
+        
+        # Check if user has already reviewed this product
+        has_reviewed = Review.objects.filter(
+            customer=customer,
+            product=product
+        ).exists()
+        
+        can_review = has_purchased and not has_reviewed
     
     # use ml model to get similar items
     similar_items = get_product_recommendations([product.sku], top_n=4) 
@@ -214,6 +255,10 @@ def product_detail(request, sku):
         'similar_items': similar_items,
         'reviews': reviews,
         'total_reviews': total_reviews,
+        'average_rating': average_rating,
+        'can_review': can_review,
+        'has_purchased': has_purchased,
+        'has_reviewed': has_reviewed,
     })
 
 
@@ -311,10 +356,18 @@ def cart_view(request):
     using_db_cart = request.user.is_authenticated and hasattr(request.user, 'customer_profile')
 
     # recommendations based on cart items
-    frequently_bought_together = get_product_recommendations(
-        product_skus=[item.product.sku if hasattr(item, 'product') else item['product'].sku for item in cart_items], 
-        top_n=3
-    )
+    frequently_bought_together = []
+    if cart_items:
+        # Extract SKUs from cart items (handles both database cart items and session cart dicts)
+        product_skus = [
+            item.product.sku if hasattr(item, 'product') else item['product'].sku 
+            for item in cart_items
+        ]
+        if product_skus:
+            frequently_bought_together = get_product_recommendations(product_skus, top_n=3)
+    else:
+        # If cart is empty, show popular products instead
+        frequently_bought_together = get_product_recommendations([], top_n=3)
     
     return render(request, 'storefront/cart.html', {
         'cart_items': cart_items,
@@ -518,9 +571,26 @@ def order_detail_view(request, order_id):
         order.created_at >= timezone.now() - timedelta(hours=24)
     )
     
+    # Check which products can be reviewed (delivered orders only)
+    reviewable_items = []
+    if order.status == 'delivered' and hasattr(request.user, 'customer_profile'):
+        for item in order.items.all():
+            # Check if user has already reviewed this product
+            has_reviewed = Review.objects.filter(
+                customer=request.user.customer_profile,
+                product=item.product
+            ).exists()
+            
+            reviewable_items.append({
+                'item': item,
+                'can_review': not has_reviewed,
+                'has_reviewed': has_reviewed,
+            })
+    
     return render(request, 'storefront/order_detail.html', {
         'order': order,
         'can_cancel': can_cancel,
+        'reviewable_items': reviewable_items,
     })
 
 
@@ -557,3 +627,75 @@ def cancel_order_view(request, order_id):
     
     messages.success(request, f'Order #{order.id} has been cancelled.')
     return redirect('storefront:order_list')
+
+
+# ============ REVIEWS ============
+
+@login_required
+def review_create_view(request, sku):
+    """Create a new review for a product"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to write reviews.')
+        return redirect('storefront:product_detail', sku=sku)
+    
+    product = get_object_or_404(Product, sku=sku, is_active=True, archived=False)
+    customer = request.user.customer_profile
+    
+    # Check if user has purchased this product
+    has_purchased = OrderItem.objects.filter(
+        order__customer=customer,
+        order__status='delivered',
+        product=product
+    ).exists()
+    
+    if not has_purchased:
+        messages.error(request, 'You must have purchased this product to write a review.')
+        return redirect('storefront:product_detail', sku=sku)
+    
+    # Check if user has already reviewed this product
+    existing_review = Review.objects.filter(customer=customer, product=product).first()
+    if existing_review:
+        messages.warning(request, 'You have already reviewed this product.')
+        return redirect('storefront:product_detail', sku=sku)
+    
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product = product
+            review.customer = customer
+            review.is_approved = False  # Requires admin approval
+            review.save()
+            
+            messages.success(request, 'Thank you for your review! It will be published after admin approval.')
+            return redirect('storefront:product_detail', sku=sku)
+    else:
+        form = ReviewForm()
+    
+    return render(request, 'storefront/review_form.html', {
+        'form': form,
+        'product': product,
+    })
+
+
+@login_required
+def review_list_view(request):
+    """Display user's submitted reviews with status"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to view reviews.')
+        return redirect('storefront:home')
+    
+    customer = request.user.customer_profile
+    reviews = Review.objects.filter(customer=customer).select_related('product', 'product__category').order_by('-created_at')
+    
+    # Count reviews by status
+    pending_count = reviews.filter(is_approved=False).count()
+    approved_count = reviews.filter(is_approved=True).count()
+    total_count = reviews.count()
+    
+    return render(request, 'storefront/review_list.html', {
+        'reviews': reviews,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'total_count': total_count,
+    })
