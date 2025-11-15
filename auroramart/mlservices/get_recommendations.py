@@ -45,4 +45,5 @@ def get_product_recommendations(product_skus, top_n=5):
             .distinct()
         return Product.objects \
             .filter(category__in=input_categories, is_active=True, archived=False) \
+            .exclude(sku__in=product_skus) \
             .order_by('-rating')[:top_n]
