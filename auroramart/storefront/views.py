@@ -318,7 +318,7 @@ def cart_view(request):
     recommendations = get_recommendations(
         items=[item.product.sku for item in cart_items], 
         metric='lift',
-        top_n=5)
+        top_n=3)
     print(recommendations)
 
     frequently_bought_together = Product.objects.filter(sku__in=recommendations, is_active=True, archived=False)
