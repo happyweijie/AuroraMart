@@ -5,20 +5,23 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from decimal import Decimal
-from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review
+from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review, Watchlist, WatchlistItem
+from users.models import Customer
 from .forms import CheckoutForm, ReviewForm
 from mlservices.get_recommendations import get_product_recommendations
 
 # Create your views here.
 def index(request):
+    # Featured products with review counts for social proof
     featured_products = Product.objects.filter(
         stock__gte=0,
         is_active=True,
-        archived=False) \
-    .order_by('-rating', '-created_at') \
-    .all()[:12]
+        archived=False
+    ).annotate(
+        review_count=Count('reviews', filter=Q(reviews__is_approved=True))
+    ).order_by('-rating', '-review_count', '-created_at')[:12]
 
-    # Get categories that have products (active and not archived)
+    # Get categories that have products (active and not archived) with product counts
     categories_with_products = Category.objects.filter(
         products__is_active=True,
         products__archived=False,
@@ -35,8 +38,9 @@ def index(request):
         customer = request.user.customer_profile
         if customer.preferred_category_fk:
             preferred_category = customer.preferred_category_fk
-            for_you_products = preferred_category.get_all_products() \
-                .order_by('-rating', '-created_at')[:12]
+            for_you_products = preferred_category.get_all_products().annotate(
+                review_count=Count('reviews', filter=Q(reviews__is_approved=True))
+            ).order_by('-rating', '-review_count', '-created_at')[:12]
     else:
         # For non-logged-in users, show trending products (highest rated or most reviewed)
         trending_products = Product.objects.filter(
@@ -229,6 +233,7 @@ def product_detail(request, sku):
     can_review = False
     has_purchased = False
     has_reviewed = False
+    is_in_watchlist = False
     
     if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
         customer = request.user.customer_profile
@@ -246,6 +251,13 @@ def product_detail(request, sku):
         ).exists()
         
         can_review = has_purchased and not has_reviewed
+        
+        # Check if product is in watchlist
+        try:
+            watchlist = Watchlist.objects.get(customer=customer)
+            is_in_watchlist = WatchlistItem.objects.filter(watchlist=watchlist, product=product).exists()
+        except Watchlist.DoesNotExist:
+            is_in_watchlist = False
     
     # use ml model to get similar items
     similar_items = get_product_recommendations([product.sku], top_n=4) 
@@ -259,6 +271,7 @@ def product_detail(request, sku):
         'can_review': can_review,
         'has_purchased': has_purchased,
         'has_reviewed': has_reviewed,
+        'is_in_watchlist': is_in_watchlist,
     })
 
 
@@ -699,3 +712,86 @@ def review_list_view(request):
         'approved_count': approved_count,
         'total_count': total_count,
     })
+
+
+# ============ WATCHLIST FUNCTIONALITY ============
+
+def get_or_create_watchlist(customer):
+    """Helper function to get or create a watchlist for a customer"""
+    watchlist, created = Watchlist.objects.get_or_create(customer=customer)
+    return watchlist
+
+
+@login_required
+def watchlist_view(request):
+    """Display user's watchlist"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to access the watchlist.')
+        return redirect('storefront:home')
+    
+    customer = request.user.customer_profile
+    watchlist = get_or_create_watchlist(customer)
+    watchlist_items = watchlist.items.select_related('product', 'product__category').order_by('-added_at')
+    
+    return render(request, 'storefront/watchlist.html', {
+        'watchlist_items': watchlist_items,
+        'watchlist_count': watchlist_items.count(),
+    })
+
+
+@login_required
+def add_to_watchlist(request, sku):
+    """Add a product to user's watchlist"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to add items to your watchlist.')
+        return redirect('storefront:product_detail', sku=sku)
+    
+    product = get_object_or_404(Product, sku=sku, is_active=True, archived=False)
+    customer = request.user.customer_profile
+    watchlist = get_or_create_watchlist(customer)
+    
+    # Check if already in watchlist
+    if WatchlistItem.objects.filter(watchlist=watchlist, product=product).exists():
+        messages.info(request, f'{product.name} is already in your watchlist.')
+    else:
+        WatchlistItem.objects.create(watchlist=watchlist, product=product)
+        messages.success(request, f'{product.name} has been added to your watchlist.')
+    
+    # Redirect back to product page or watchlist
+    next_url = request.GET.get('next', 'storefront:product_detail')
+    if next_url.startswith('http'):
+        return redirect(next_url)
+    elif ':' in next_url:
+        from django.urls import reverse
+        return redirect(reverse(next_url, args=[sku]))
+    else:
+        return redirect('storefront:product_detail', sku=sku)
+
+
+@login_required
+def remove_from_watchlist(request, sku):
+    """Remove a product from user's watchlist"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to remove items from your watchlist.')
+        return redirect('storefront:product_detail', sku=sku)
+    
+    product = get_object_or_404(Product, sku=sku)
+    customer = request.user.customer_profile
+    
+    try:
+        watchlist = Watchlist.objects.get(customer=customer)
+        watchlist_item = WatchlistItem.objects.get(watchlist=watchlist, product=product)
+        watchlist_item.delete()
+        messages.success(request, f'{product.name} has been removed from your watchlist.')
+    except (Watchlist.DoesNotExist, WatchlistItem.DoesNotExist):
+        messages.error(request, 'Item not found in your watchlist.')
+    
+    # Redirect back based on referrer
+    next_url = request.GET.get('next', 'storefront:watchlist')
+    if next_url.startswith('http'):
+        return redirect(next_url)
+    elif ':' in next_url:
+        from django.urls import reverse
+        return redirect(reverse(next_url, args=[sku]))
+    else:
+        return redirect('storefront:watchlist')

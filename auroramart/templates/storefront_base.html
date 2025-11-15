@@ -9,8 +9,8 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-8 h-8 object-contain">
-                    <a href="{% url 'storefront:home' %}" class="text-xl font-semibold text-foreground">AuroraMart</a>
+                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-10 h-10 object-contain">
+                    <a href="{% url 'storefront:home' %}" class="text-2xl font-bold" style="color: #1e3a5f;">AuroraMart</a>
                 </div>
                 
                 <!-- Search Bar -->
@@ -34,7 +34,9 @@
                         <!-- Watchlist -->
                         <a href="{% url 'storefront:watchlist' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
                             <i data-lucide="heart" class="w-5 h-5 text-foreground"></i>
-                            <span class="absolute top-0 right-0 w-4 h-4 bg-cyan text-white text-xs rounded-full flex items-center justify-center">0</span>
+                            {% if watchlist_count > 0 %}
+                            <span class="absolute top-0 right-0 w-4 h-4 bg-cyan text-white text-xs rounded-full flex items-center justify-center font-medium">{{ watchlist_count }}</span>
+                            {% endif %}
                         </a>
                         
                         <!-- Cart -->
@@ -145,8 +147,8 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-8 h-8 object-contain">
-                        <span class="text-lg font-semibold">AuroraMart</span>
+                        <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-10 h-10 object-contain">
+                        <span class="text-xl font-bold" style="color: #1e3a5f;">AuroraMart</span>
                     </div>
                     <p class="text-sm text-gray-400">Your one-stop shop for quality products with personalized recommendations.</p>
                 </div>

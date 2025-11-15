@@ -28,6 +28,8 @@ urlpatterns = [
     path('products/<str:sku>/review/', views.review_create_view, name='review_create'),
     path('reviews/', views.review_list_view, name='review_list'),
     
-    # Watchlist (placeholder)
-    path('watchlist/', views.index, name='watchlist'),
+    # Watchlist
+    path('watchlist/', views.watchlist_view, name='watchlist'),
+    path('watchlist/add/<str:sku>/', views.add_to_watchlist, name='add_to_watchlist'),
+    path('watchlist/remove/<str:sku>/', views.remove_from_watchlist, name='remove_from_watchlist'),
 ]

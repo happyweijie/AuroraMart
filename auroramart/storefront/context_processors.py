@@ -1,5 +1,5 @@
 from django.db.models import Count
-from .models import Category, Product, Cart
+from .models import Category, Product, Cart, Watchlist
 
 
 def categories_with_products(request):
@@ -41,5 +41,24 @@ def cart_count(request):
     
     return {
         'cart_item_count': count
+    }
+
+
+def watchlist_count(request):
+    """
+    Context processor to provide watchlist item count for badge in navigation.
+    Only works for authenticated users with customer profiles.
+    """
+    count = 0
+    
+    if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
+        try:
+            watchlist = Watchlist.objects.get(customer=request.user.customer_profile)
+            count = watchlist.items.count()
+        except Watchlist.DoesNotExist:
+            count = 0
+    
+    return {
+        'watchlist_count': count
     }
 
