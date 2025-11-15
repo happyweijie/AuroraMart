@@ -1,0 +1,148 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Admin User Management{% endblock %}
+{% block page_description %}Manage admin users and permissions{% endblock %}
+
+{% block page_content %}
+<!-- Header Actions -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-xl font-semibold text-foreground">Admin Users</h2>
+        <p class="text-sm text-muted-foreground">Manage staff accounts and permissions</p>
+    </div>
+    <a href="{% url 'admin_panel:admin_user_create' %}" 
+       class="px-4 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span>Create Admin User</span>
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Search</label>
+            <input type="text" name="search" value="{{ search_query }}" 
+                   placeholder="Search by username, email, name..."
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Role</label>
+            <select name="role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan">
+                <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All Roles</option>
+                <option value="superuser" {% if role_filter == 'superuser' %}selected{% endif %}>Superuser</option>
+                <option value="staff" {% if role_filter == 'staff' %}selected{% endif %}>Staff</option>
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button type="submit" class="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors">
+                Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Username</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in page_obj %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-foreground">{{ user.username }}</div>
+                        {% if user.id == request.user.id %}
+                        <div class="text-xs text-cyan">(You)</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-foreground">{{ user.email }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-foreground">
+                            {{ user.get_full_name|default:"—" }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if user.is_superuser %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">Superuser</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">Staff</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if user.is_active %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Active</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="{% url 'admin_panel:admin_user_update' user.id %}" 
+                               class="text-cyan hover:text-cyan/80 transition-colors" title="Edit">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </a>
+                            {% if user.id != request.user.id %}
+                            <a href="{% url 'admin_panel:admin_user_delete' user.id %}" 
+                               class="text-red-600 hover:text-red-700 transition-colors" title="Delete">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="text-muted-foreground">
+                            <i data-lucide="users" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            <p>No admin users found</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} users
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-cyan text-white rounded-lg text-sm">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

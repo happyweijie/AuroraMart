@@ -1,0 +1,107 @@
+{% extends "storefront_base.html" %}
+
+{% block title %}Chat - {{ chat_session.subject }} - AuroraMart{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{% url 'storefront:chat_list' %}" 
+                   class="text-muted-foreground hover:text-cyan">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <h1 class="text-2xl font-bold text-foreground">{{ chat_session.subject }}</h1>
+                {% if chat_session.status == 'open' %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 font-medium">
+                        Open
+                    </span>
+                {% else %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
+                        Closed
+                    </span>
+                {% endif %}
+            </div>
+            {% if chat_session.order %}
+            <p class="text-sm text-muted-foreground">
+                <i data-lucide="package" class="w-4 h-4 inline-block"></i>
+                Related to Order #{{ chat_session.order.id }}
+            </p>
+            {% endif %}
+        </div>
+        {% if chat_session.status == 'open' %}
+        <form method="post" action="{% url 'storefront:chat_close' chat_session.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" 
+                    onclick="return confirm('Are you sure you want to close this chat?');"
+                    class="px-4 py-2 border border-gray-300 text-foreground font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                Close Chat
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Messages -->
+    <div class="bg-card border border-border rounded-lg p-6 mb-6 space-y-4" style="max-height: 500px; overflow-y: auto;">
+        {% for msg in messages_list %}
+        <div class="flex {% if msg.sender == 'customer' %}justify-end{% else %}justify-start{% endif %}">
+            <div class="max-w-2xl {% if msg.sender == 'customer' %}bg-cyan text-white rounded-lg px-4 py-3{% else %}bg-gray-100 text-foreground rounded-lg px-4 py-3{% endif %}">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold">
+                        {% if msg.sender == 'customer' %}
+                            You
+                        {% else %}
+                            Support Team
+                        {% endif %}
+                    </span>
+                    <span class="text-xs opacity-75">
+                        {{ msg.created_at|date:"M d, g:i A" }}
+                    </span>
+                </div>
+                <p class="text-sm whitespace-pre-wrap">{{ msg.message }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted-foreground py-8">
+            <i data-lucide="message-square" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+            <p>No messages yet</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Message Form -->
+    {% if chat_session.status == 'open' %}
+    <div class="bg-card border border-border rounded-lg p-6">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label for="{{ form.message.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Your Message
+                </label>
+                {{ form.message }}
+                {% if form.message.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.message.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <button type="submit" class="px-6 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    Send
+                </button>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+        <p class="text-sm text-muted-foreground">This chat is closed. You can start a new conversation if you need further assistance.</p>
+        <a href="{% url 'storefront:chat_create' %}" class="text-cyan hover:underline mt-2 inline-block">
+            Start New Chat
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

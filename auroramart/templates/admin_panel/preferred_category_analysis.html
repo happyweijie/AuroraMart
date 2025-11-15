@@ -1,0 +1,216 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Preferred Category Analysis{% endblock %}
+{% block page_description %}Analyze customer category preferences using ML predictions{% endblock %}
+
+{% block page_content %}
+<!-- Header Actions -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-xl font-semibold text-foreground">Preferred Category Analysis</h2>
+        <p class="text-sm text-muted-foreground">View ML-predicted customer category preferences and statistics</p>
+    </div>
+    {% if customers_without_preferred > 0 %}
+    <form method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" name="update_predictions" 
+                class="px-4 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            <span>Update Predictions ({{ customers_without_preferred }} remaining)</span>
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-muted-foreground mb-1">Total Customers</p>
+                <p class="text-2xl font-bold text-foreground">{{ total_customers }}</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-muted-foreground mb-1">With Preferred Category</p>
+                <p class="text-2xl font-bold text-green-600">{{ customers_with_preferred }}</p>
+                <p class="text-xs text-muted-foreground mt-1">
+                    {{ customers_with_preferred|floatformat:0|default:"0" }}% coverage
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-muted-foreground mb-1">Without Preferred Category</p>
+                <p class="text-2xl font-bold text-orange-600">{{ customers_without_preferred }}</p>
+                <p class="text-xs text-muted-foreground mt-1">Pending ML prediction</p>
+            </div>
+            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="target" class="w-6 h-6 text-orange-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Distribution -->
+{% if category_distribution %}
+<div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+    <h3 class="text-lg font-semibold text-foreground mb-4">Category Distribution</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for category in category_distribution %}
+        <a href="?category={{ category.id }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+           class="p-4 border border-gray-200 rounded-lg hover:border-cyan hover:shadow-md transition-all {% if selected_category == category.id|stringformat:'s' %}border-cyan bg-cyan/5{% endif %}">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-medium text-foreground">{{ category.name }}</span>
+                <span class="text-sm font-bold text-cyan">{{ category.customer_count }}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-cyan h-2 rounded-full" style="width: {% widthratio category.customer_count customers_with_preferred 100 %}%"></div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Search Customers</label>
+            <input type="text" name="search" value="{{ search_query }}" 
+                   placeholder="Search by username, email, name..."
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Filter by Category</label>
+            <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan">
+                <option value="">All Categories</option>
+                {% for category in all_categories %}
+                <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:'s' %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors">
+                Filter
+            </button>
+            <a href="{% url 'admin_panel:preferred_category' %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Customers Table -->
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Customer</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Demographics</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Preferred Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for customer in page_obj %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-foreground">{{ customer.user.username }}</div>
+                        <div class="text-xs text-muted-foreground">
+                            {{ customer.user.get_full_name|default:"—" }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-foreground">{{ customer.user.email }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-xs text-foreground">
+                            <div>Age: {{ customer.age }}</div>
+                            <div>{{ customer.gender }} • {{ customer.occupation }}</div>
+                            <div class="text-muted-foreground">Income: ${{ customer.monthly_income_sgd|floatformat:0 }}</div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if customer.preferred_category_fk %}
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 text-xs rounded-full bg-cyan-100 text-cyan-700 font-medium">
+                                {{ customer.preferred_category_fk.name }}
+                            </span>
+                        </div>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
+                            Not Set
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if customer.preferred_category_fk %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Predicted</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center">
+                        <div class="text-muted-foreground">
+                            <i data-lucide="users" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            <p>No customers found</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} customers
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-cyan text-white rounded-lg text-sm">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" 
+               class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

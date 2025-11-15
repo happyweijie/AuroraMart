@@ -9,8 +9,8 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-10 h-10 object-contain">
-                    <a href="{% url 'storefront:home' %}" class="text-2xl font-bold" style="color: #1e3a5f;">AuroraMart</a>
+                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-14 h-14 object-contain">
+                    <a href="{% url 'storefront:home' %}" class="text-xl font-bold" style="color: #1e3a5f;">AuroraMart</a>
                 </div>
                 
                 <!-- Search Bar -->
@@ -30,6 +30,15 @@
                 
                 <!-- Navigation Icons -->
                 <div class="flex items-center gap-4">
+                    <!-- Flash Sale Button (only show if there are active flash sales) -->
+                    {% if active_flash_sales %}
+                    <a href="{% url 'storefront:flash_sale_products' %}" 
+                       class="p-2 hover:bg-gray-100 rounded-lg relative group"
+                       title="View All Flash Sales">
+                        <i data-lucide="flame" class="w-5 h-5 text-orange-500"></i>
+                    </a>
+                    {% endif %}
+                    
                     {% if user.is_authenticated %}
                         <!-- Watchlist -->
                         <a href="{% url 'storefront:watchlist' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
@@ -84,6 +93,11 @@
                                     My Reviews
                                 </a>
                                 
+                                <a href="{% url 'storefront:chat_list' %}" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
+                                    <i data-lucide="message-circle" class="inline-block w-4 h-4 mr-2 text-muted-foreground"></i>
+                                    Support Chat
+                                </a>
+                                
                                 {# Separator #}
                                 <div class="border-t border-gray-100 my-1"></div>
 
@@ -115,16 +129,24 @@
         </div>
     </nav>
     
-    <!-- Category Navigation -->
-    <div class="bg-white border-b border-gray-200">
+    <!-- Category Navigation (moved to top, right after main nav) -->
+    <div class="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center gap-6 h-12 overflow-x-auto">
-                <a href="{% url 'storefront:products' %}" class="text-sm font-medium text-foreground hover:text-cyan whitespace-nowrap">
+                <a href="{% url 'storefront:products' %}" 
+                   class="text-sm font-medium whitespace-nowrap transition-all
+                          {% if not current_category_slug %}text-cyan font-semibold border-b-2 border-cyan{% else %}text-muted-foreground hover:text-cyan{% endif %}">
                     All Products
                 </a>
                 {% if nav_categories %}
                     {% for category in nav_categories %}
-                    <a href="{% url 'storefront:category' category.slug %}" class="text-sm font-medium text-muted-foreground hover:text-cyan whitespace-nowrap">
+                    <a href="{% url 'storefront:category' category.slug %}" 
+                       class="text-sm font-medium whitespace-nowrap transition-all
+                              {% if current_category_slug == category.slug %}
+                              text-cyan font-semibold border-b-2 border-cyan
+                              {% else %}
+                              text-muted-foreground hover:text-cyan
+                              {% endif %}">
                         {{ category.name }}
                     </a>
                     {% endfor %}
@@ -143,48 +165,8 @@
     
     <!-- Footer -->
     <footer class="bg-primary text-primary-foreground mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <div class="flex items-center gap-3 mb-4">
-                        <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-10 h-10 object-contain">
-                        <span class="text-xl font-bold" style="color: #1e3a5f;">AuroraMart</span>
-                    </div>
-                    <p class="text-sm text-gray-400">Your one-stop shop for quality products with personalized recommendations.</p>
-                </div>
-                
-                <div>
-                    <h3 class="font-semibold mb-4">Shop</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-cyan">All Products</a></li>
-                        <li><a href="#" class="hover:text-cyan">New Arrivals</a></li>
-                        <li><a href="#" class="hover:text-cyan">Best Sellers</a></li>
-                        <li><a href="#" class="hover:text-cyan">Promotions</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h3 class="font-semibold mb-4">Customer Service</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-cyan">Contact Us</a></li>
-                        <li><a href="#" class="hover:text-cyan">Track Order</a></li>
-                        <li><a href="#" class="hover:text-cyan">Returns</a></li>
-                        <li><a href="#" class="hover:text-cyan">FAQs</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h3 class="font-semibold mb-4">Account</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-cyan">My Account</a></li>
-                        <li><a href="#" class="hover:text-cyan">Order History</a></li>
-                        <li><a href="#" class="hover:text-cyan">Watchlist</a></li>
-                        <li><a href="#" class="hover:text-cyan">Settings</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="border-t border-gray-800 mt-8 pt-8 flex items-center justify-between text-sm text-gray-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between text-sm text-gray-400">
                 <p>&copy; 2025 AuroraMart. All rights reserved.</p>
                 
                 <!-- Admin Access Icon -->

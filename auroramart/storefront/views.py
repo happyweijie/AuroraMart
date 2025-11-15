@@ -4,11 +4,60 @@ from django.db.models import Count, Q
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.utils import timezone
+from datetime import date, timedelta
 from decimal import Decimal
-from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review, Watchlist, WatchlistItem
+from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review, Watchlist, WatchlistItem, Promotion, ChatSession, ChatMessage
 from users.models import Customer
-from .forms import CheckoutForm, ReviewForm
+from .forms import CheckoutForm, ReviewForm, ChatForm, ChatMessageForm
 from mlservices.get_recommendations import get_product_recommendations
+from admin_panel.models import RecommendationPlacement
+
+# Helper function to annotate products with promotion data
+def annotate_products_with_promotions(products):
+    """Add promotion data directly to product objects (modifies in place)"""
+    today = date.today()
+    all_active_promotions = Promotion.objects.filter(
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    ).prefetch_related('products', 'categories')
+    
+    # Handle different input types
+    if hasattr(products, 'object_list'):  # Paginator Page object
+        products_list = list(products.object_list)
+    elif hasattr(products, '__iter__'):  # Queryset or list
+        products_list = list(products)
+    else:
+        products_list = [products]
+    
+    for product in products_list:
+        applicable_promotions = []
+        for promotion in all_active_promotions:
+            if promotion.applies_to_product(product):
+                applicable_promotions.append(promotion)
+        
+        # Sort by discount percent (highest first) and get the best one
+        if applicable_promotions:
+            applicable_promotions.sort(key=lambda p: p.discount_percent, reverse=True)
+            best_promotion = applicable_promotions[0]
+            discount_amount = (product.price * best_promotion.discount_percent) / 100
+            discounted_price = product.price - discount_amount
+            
+            # Attach promotion data directly to product object
+            product.active_promotion = best_promotion
+            product.discounted_price = discounted_price
+            product.is_flash_sale = (best_promotion.end_date - today).days <= 3
+        else:
+            product.active_promotion = None
+            product.discounted_price = None
+            product.is_flash_sale = False
+    
+    # If it was a page object, update its object_list
+    if hasattr(products, 'object_list'):
+        products.object_list = products_list
+    
+    return products if hasattr(products, 'object_list') else products_list
 
 # Create your views here.
 def index(request):
@@ -29,6 +78,39 @@ def index(request):
     ).annotate(
         product_count=Count('products')
     ).distinct().order_by('-product_count', 'name')[:10]
+    
+    # Annotate homepage categories with flash sale data
+    today = date.today()
+    flash_sale_promotions = Promotion.objects.filter(
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    ).prefetch_related('categories')
+    
+    flash_sale_data = {}
+    for promotion in flash_sale_promotions:
+        days_remaining = (promotion.end_date - today).days
+        if days_remaining <= 3:  # Flash sale (3 days or less)
+            for category in promotion.categories.all():
+                if category.id not in flash_sale_data or days_remaining < (flash_sale_data[category.id]['end_date'] - today).days:
+                    flash_sale_data[category.id] = {
+                        'promotion': promotion,
+                        'end_date': promotion.end_date,
+                        'discount': promotion.discount_percent
+                    }
+    
+    # Annotate categories with flash sale info
+    for category in categories_with_products:
+        if category.id in flash_sale_data:
+            category.has_flash_sale = True
+            category.flash_sale_promotion = flash_sale_data[category.id]['promotion']
+            category.flash_sale_end_date = flash_sale_data[category.id]['end_date']
+            category.flash_sale_discount = flash_sale_data[category.id]['discount']
+        else:
+            category.has_flash_sale = False
+            category.flash_sale_promotion = None
+            category.flash_sale_end_date = None
+            category.flash_sale_discount = None
 
     # for logged in users, include personalize products based on their preferences
     trending_products = None
@@ -51,11 +133,36 @@ def index(request):
             review_count=Count('reviews', filter=Q(reviews__is_approved=True))
         ).order_by('-rating', '-review_count', '-created_at')[:12]
 
+    # Annotate products with promotion data (convert querysets to lists first)
+    featured_products = list(featured_products)
+    featured_products = annotate_products_with_promotions(featured_products)
+    if for_you_products:
+        for_you_products = list(for_you_products)
+        for_you_products = annotate_products_with_promotions(for_you_products)
+    if trending_products:
+        trending_products = list(trending_products)
+        trending_products = annotate_products_with_promotions(trending_products)
+    
+    # Check if recommendation placement is active for homepage
+    homepage_recommendations = None
+    recommendation_placement = RecommendationPlacement.objects.filter(
+        placement='homepage',
+        is_active=True
+    ).first()
+    
+    if recommendation_placement and recommendation_placement.strategy == 'association_rules':
+        # Get ML recommendations for homepage (e.g., based on popular products)
+        popular_skus = [p.sku for p in featured_products[:5]] if featured_products else []
+        homepage_recommendations = list(get_product_recommendations(popular_skus, top_n=8))
+        homepage_recommendations = annotate_products_with_promotions(homepage_recommendations)
+
     return render(request, 'storefront/home.html', {
         'featured_products': featured_products,
         'categories': categories_with_products,
         'for_you_products': for_you_products,
         'trending_products': trending_products,
+        'homepage_recommendations': homepage_recommendations,
+        'recommendation_placement': recommendation_placement,
         })
 
 def products(request):
@@ -127,6 +234,9 @@ def products(request):
         products__archived=False
     ).distinct().order_by('name')
 
+    # Annotate products with promotion data (modifies page_obj in place)
+    annotate_products_with_promotions(page_obj)
+
     return render(request, 'storefront/products.html', {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -194,6 +304,23 @@ def category(request, slug):
     paginator = Paginator(products, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Annotate products with promotion data (modifies page_obj in place)
+    annotate_products_with_promotions(page_obj)
+    
+    # Check if recommendation placement is active for category page
+    category_recommendations = None
+    recommendation_placement = RecommendationPlacement.objects.filter(
+        placement='category',
+        is_active=True
+    ).first()
+    
+    if recommendation_placement and recommendation_placement.strategy == 'association_rules':
+        # Get ML recommendations based on category products
+        category_product_skus = list(page_obj.object_list[:5].values_list('sku', flat=True)) if hasattr(page_obj, 'object_list') else []
+        if category_product_skus:
+            category_recommendations = list(get_product_recommendations(category_product_skus, top_n=6))
+            category_recommendations = annotate_products_with_promotions(category_recommendations)
 
     return render(request, 'storefront/products.html', {
         'page_obj': page_obj,
@@ -204,6 +331,8 @@ def category(request, slug):
         'min_price': min_price,
         'max_price': max_price,
         'min_rating': min_rating,
+        'category_recommendations': category_recommendations,
+        'recommendation_placement': recommendation_placement,
     })
 
 def product_detail(request, sku):
@@ -259,8 +388,44 @@ def product_detail(request, sku):
         except Watchlist.DoesNotExist:
             is_in_watchlist = False
     
-    # use ml model to get similar items
-    similar_items = get_product_recommendations([product.sku], top_n=4) 
+    # Get active promotions for this product
+    # Priority: Product-specific promotions > Category-based promotions
+    today = date.today()
+    all_active_promotions = Promotion.objects.filter(
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    ).prefetch_related('products', 'categories')
+    
+    # Filter promotions that apply to this product
+    applicable_promotions = []
+    for promotion in all_active_promotions:
+        if promotion.applies_to_product(product):
+            applicable_promotions.append(promotion)
+    
+    # Sort by discount percent (highest first) and get the best one
+    applicable_promotions.sort(key=lambda p: p.discount_percent, reverse=True)
+    
+    # Calculate discounted price if promotion exists
+    discounted_price = None
+    active_promotion = None
+    if applicable_promotions:
+        active_promotion = applicable_promotions[0]
+        discount_amount = (product.price * active_promotion.discount_percent) / 100
+        discounted_price = product.price - discount_amount
+    
+    # Check if recommendation placement is active for product detail page
+    similar_items = []
+    recommendation_placement = RecommendationPlacement.objects.filter(
+        placement='product_detail',
+        is_active=True
+    ).first()
+    
+    if recommendation_placement:
+        # Use ML recommendations if placement is active
+        if recommendation_placement.strategy == 'association_rules':
+            similar_items = get_product_recommendations([product.sku], top_n=4) 
+            annotate_products_with_promotions(similar_items)
 
     return render(request, 'storefront/product_detail.html', {
         'product': product,
@@ -272,6 +437,9 @@ def product_detail(request, sku):
         'has_purchased': has_purchased,
         'has_reviewed': has_reviewed,
         'is_in_watchlist': is_in_watchlist,
+        'active_promotion': active_promotion,
+        'discounted_price': discounted_price,
+        'recommendation_placement': recommendation_placement,
     })
 
 
@@ -368,25 +536,34 @@ def cart_view(request):
     # Determine if using database cart (only if user is authenticated AND has customer_profile)
     using_db_cart = request.user.is_authenticated and hasattr(request.user, 'customer_profile')
 
-    # recommendations based on cart items
+    # Check if recommendation placement is active for cart page
     frequently_bought_together = []
-    if cart_items:
-        # Extract SKUs from cart items (handles both database cart items and session cart dicts)
-        product_skus = [
-            item.product.sku if hasattr(item, 'product') else item['product'].sku 
-            for item in cart_items
-        ]
-        if product_skus:
-            frequently_bought_together = get_product_recommendations(product_skus, top_n=3)
-    else:
-        # If cart is empty, show popular products instead
-        frequently_bought_together = get_product_recommendations([], top_n=3)
+    recommendation_placement = RecommendationPlacement.objects.filter(
+        placement='cart',
+        is_active=True
+    ).first()
+    
+    if recommendation_placement:
+        if cart_items:
+            # Extract SKUs from cart items (handles both database cart items and session cart dicts)
+            product_skus = [
+                item.product.sku if hasattr(item, 'product') else item['product'].sku 
+                for item in cart_items
+            ]
+            if product_skus and recommendation_placement.strategy == 'association_rules':
+                frequently_bought_together = get_product_recommendations(product_skus, top_n=3)
+                annotate_products_with_promotions(frequently_bought_together)
+        else:
+            # If cart is empty, show popular products instead
+            frequently_bought_together = get_product_recommendations([], top_n=3)
+            annotate_products_with_promotions(frequently_bought_together)
     
     return render(request, 'storefront/cart.html', {
         'cart_items': cart_items,
         'total': total,
         'using_db_cart': using_db_cart,
         'frequently_bought_together': frequently_bought_together,
+        'recommendation_placement': recommendation_placement,
     })
 
 
@@ -795,3 +972,176 @@ def remove_from_watchlist(request, sku):
         return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:watchlist')
+
+
+# ============ CHAT FUNCTIONALITY ============
+
+@login_required
+def chat_create(request):
+    """Create a new chat session"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to contact support.')
+        return redirect('storefront:home')
+    
+    customer = request.user.customer_profile
+    
+    if request.method == 'POST':
+        form = ChatForm(request.POST, customer=customer)
+        message_form = ChatMessageForm(request.POST)
+        
+        if form.is_valid() and message_form.is_valid():
+            # Create chat session
+            chat_session = form.save(commit=False)
+            chat_session.customer = customer
+            chat_session.status = 'open'
+            chat_session.save()
+            
+            # Create first message
+            chat_message = message_form.save(commit=False)
+            chat_message.session = chat_session
+            chat_message.sender = 'customer'
+            chat_message.save()
+            
+            messages.success(request, 'Your message has been sent. Our support team will respond soon.')
+            return redirect('storefront:chat_detail', session_id=chat_session.id)
+    else:
+        form = ChatForm(customer=customer)
+        message_form = ChatMessageForm()
+    
+    return render(request, 'storefront/chat_create.html', {
+        'form': form,
+        'message_form': message_form,
+    })
+
+
+@login_required
+def chat_list(request):
+    """List all chat sessions for the customer"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to view chat history.')
+        return redirect('storefront:home')
+    
+    customer = request.user.customer_profile
+    chat_sessions = ChatSession.objects.filter(customer=customer).select_related('order').prefetch_related('messages').order_by('-updated_at')
+    
+    # For now, just track admin messages count (can be enhanced with read/unread tracking later)
+    for session in chat_sessions:
+        admin_messages = session.messages.filter(sender='admin')
+        session.unread_count = admin_messages.count() if admin_messages.exists() else 0
+    
+    return render(request, 'storefront/chat_list.html', {
+        'chat_sessions': chat_sessions,
+    })
+
+
+@login_required
+def chat_detail(request, session_id):
+    """View and send messages in a chat session"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to view chat details.')
+        return redirect('storefront:home')
+    
+    customer = request.user.customer_profile
+    chat_session = get_object_or_404(ChatSession, id=session_id, customer=customer)
+    
+    if request.method == 'POST':
+        form = ChatMessageForm(request.POST)
+        if form.is_valid():
+            chat_message = form.save(commit=False)
+            chat_message.session = chat_session
+            chat_message.sender = 'customer'
+            chat_message.save()
+            
+            # Update session updated_at
+            chat_session.save()  # This will update updated_at due to auto_now
+            
+            messages.success(request, 'Message sent.')
+            return redirect('storefront:chat_detail', session_id=session_id)
+    else:
+        form = ChatMessageForm()
+    
+    # Get all messages (use chat_messages to avoid conflict with Django messages)
+    chat_messages = chat_session.messages.all().order_by('created_at')
+    
+    return render(request, 'storefront/chat_detail.html', {
+        'chat_session': chat_session,
+        'messages_list': chat_messages,
+        'form': form,
+    })
+
+
+@login_required
+def chat_close(request, session_id):
+    """Close a chat session"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to close chat sessions.')
+        return redirect('storefront:home')
+    
+    customer = request.user.customer_profile
+    chat_session = get_object_or_404(ChatSession, id=session_id, customer=customer)
+    
+    if request.method == 'POST':
+        chat_session.status = 'closed'
+        chat_session.save()
+        messages.success(request, 'Chat session closed.')
+        return redirect('storefront:chat_list')
+    
+    return redirect('storefront:chat_detail', session_id=session_id)
+
+
+def flash_sale_products(request):
+    """Display all products on flash sale (both category-based and product-specific)"""
+    today = date.today()
+    
+    # Get all active flash sale promotions (ending within 3 days)
+    flash_sale_promotions = Promotion.objects.filter(
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    ).prefetch_related('categories', 'products')
+    
+    # Collect all products on flash sale
+    flash_sale_products_set = set()
+    
+    for promotion in flash_sale_promotions:
+        days_remaining = (promotion.end_date - today).days
+        if days_remaining <= 3:  # Flash sale (3 days or less)
+            # Add products from category-based promotions
+            for category in promotion.categories.all():
+                category_products = Product.objects.filter(
+                    category=category,
+                    is_active=True,
+                    archived=False,
+                    stock__gte=0
+                )
+                flash_sale_products_set.update(category_products)
+            
+            # Add product-specific promotions
+            for product in promotion.products.filter(is_active=True, archived=False, stock__gte=0):
+                flash_sale_products_set.add(product)
+    
+    # Convert to list and annotate with promotion data
+    flash_sale_products_list = list(flash_sale_products_set)
+    flash_sale_products_list = annotate_products_with_promotions(flash_sale_products_list)
+    
+    # Sort by discount (highest first) and then by rating
+    flash_sale_products_list.sort(
+        key=lambda p: (
+            -p.active_promotion.discount_percent if p.active_promotion else 0,
+            -p.rating,
+            -p.created_at.timestamp() if hasattr(p.created_at, 'timestamp') else 0
+        ),
+        reverse=True
+    )
+    
+    # Pagination
+    paginator = Paginator(flash_sale_products_list, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'flash_sale_count': len(flash_sale_products_list),
+    }
+    
+    return render(request, 'storefront/flash_sale_products.html', context)

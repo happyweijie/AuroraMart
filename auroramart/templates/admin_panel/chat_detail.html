@@ -1,0 +1,121 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Chat - {{ chat_session.subject }}{% endblock %}
+{% block page_description %}Respond to customer inquiry{% endblock %}
+
+{% block page_content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="bg-card border border-border rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <a href="{% url 'admin_panel:chat' %}" 
+                       class="text-muted-foreground hover:text-cyan">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </a>
+                    <h1 class="text-2xl font-bold text-foreground">{{ chat_session.subject }}</h1>
+                    {% if chat_session.status == 'open' %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700 font-medium">
+                            Open
+                        </span>
+                    {% else %}
+                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
+                            Closed
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div>
+                        <i data-lucide="user" class="w-4 h-4 inline-block"></i>
+                        <span class="font-medium text-foreground">{{ chat_session.customer.user.username }}</span>
+                        <span>({{ chat_session.customer.user.email }})</span>
+                    </div>
+                    {% if chat_session.order %}
+                    <div>
+                        <i data-lucide="package" class="w-4 h-4 inline-block"></i>
+                        <a href="{% url 'admin_panel:admin_order_detail' chat_session.order.id %}" 
+                           class="text-cyan hover:underline">
+                            Order #{{ chat_session.order.id }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if chat_session.status == 'open' %}
+            <form method="post" action="{% url 'admin_panel:chat_detail' chat_session.id %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="close">
+                <button type="submit" 
+                        onclick="return confirm('Close this chat session?');"
+                        class="px-4 py-2 border border-gray-300 text-foreground font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    Close Chat
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="text-xs text-muted-foreground">
+            Created: {{ chat_session.created_at|date:"M d, Y g:i A" }} • 
+            Last updated: {{ chat_session.updated_at|date:"M d, Y g:i A" }}
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="bg-card border border-border rounded-lg p-6 space-y-4" style="max-height: 600px; overflow-y: auto;">
+        {% for msg in messages_list %}
+        <div class="flex {% if msg.sender == 'admin' %}justify-end{% else %}justify-start{% endif %}">
+            <div class="max-w-2xl {% if msg.sender == 'admin' %}bg-cyan text-white rounded-lg px-4 py-3{% else %}bg-gray-100 text-foreground rounded-lg px-4 py-3{% endif %}">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold">
+                        {% if msg.sender == 'admin' %}
+                            You (Admin)
+                        {% else %}
+                            {{ chat_session.customer.user.username }} (Customer)
+                        {% endif %}
+                    </span>
+                    <span class="text-xs opacity-75">
+                        {{ msg.created_at|date:"M d, g:i A" }}
+                    </span>
+                </div>
+                <p class="text-sm whitespace-pre-wrap">{{ msg.message }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted-foreground py-8">
+            <i data-lucide="message-square" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+            <p>No messages yet</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Reply Form -->
+    {% if chat_session.status == 'open' %}
+    <div class="bg-card border border-border rounded-lg p-6">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label for="message" class="block text-sm font-medium text-foreground mb-2">
+                    Reply
+                </label>
+                <textarea name="message" id="message" rows="4" required
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent"
+                          placeholder="Type your response..."></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <button type="submit" class="px-6 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    Send Reply
+                </button>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+        <p class="text-sm text-muted-foreground">This chat is closed.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

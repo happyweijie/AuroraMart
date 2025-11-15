@@ -1,5 +1,7 @@
 {% extends "storefront_base.html" %}
 {% load static %}
+{% load category_icons %}
+{% load category_colors %}
 
 {% block title %}My Watchlist - AuroraMart{% endblock %}
 
@@ -14,10 +16,11 @@
     {% if watchlist_items %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for item in watchlist_items %}
-        <a href="{% url 'storefront:product_detail' item.product.sku %}" class="bg-card border border-border rounded-lg p-4 flex flex-col hover:shadow-lg transition-shadow block group">
+        <a href="{% url 'storefront:product_detail' item.product.sku %}" class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow block group flex flex-col h-full">
             <!-- Product Image -->
-            <div class="w-full h-48 bg-gray-100 rounded-md flex items-center justify-center relative mb-3">
-                <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
+            <div class="aspect-square bg-gradient-to-br {{ item.product.category|category_gradient }} rounded-md flex items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                <i data-lucide="{{ item.product.category|category_icon }}" class="w-24 h-24 text-white drop-shadow-lg relative z-10"></i>
                 <button onclick="if(confirm('Remove {{ item.product.name }} from your watchlist?')) { event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:remove_from_watchlist' item.product.sku %}?next=storefront:watchlist'; } else { event.preventDefault(); event.stopPropagation(); }" 
                         class="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10"
                         title="Remove from Watchlist">
@@ -26,12 +29,19 @@
             </div>
 
             <!-- Product Info -->
-            <div class="flex-1 flex flex-col">
-                <h3 class="font-medium text-foreground mb-1 line-clamp-2">
-                    {{ item.product.name }}
-                </h3>
+            <div class="p-4 flex flex-col flex-1">
+                <div class="flex items-start justify-between mb-2">
+                    <h3 class="font-medium text-foreground line-clamp-2 flex-1">
+                        {{ item.product.name }}
+                    </h3>
+                    <button onclick="if(confirm('Remove {{ item.product.name }} from your watchlist?')) { event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:remove_from_watchlist' item.product.sku %}?next=storefront:watchlist'; } else { event.preventDefault(); event.stopPropagation(); }" 
+                            class="ml-2 p-1 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                            title="Remove from Watchlist">
+                        <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i>
+                    </button>
+                </div>
                 
-                <p class="text-sm text-muted-foreground mb-2">SKU: {{ item.product.sku }}</p>
+                <p class="text-xs text-muted-foreground mb-2">{{ item.product.category.name }}</p>
                 
                 <!-- Rating -->
                 <div class="flex items-center gap-1 mb-3">
@@ -42,8 +52,11 @@
                             <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
                         {% endif %}
                     {% endfor %}
-                    <span class="text-sm text-muted-foreground ml-1">({{ item.product.rating }})</span>
+                    <span class="text-sm text-muted-foreground ml-1">({{ item.product.rating|floatformat:1 }})</span>
                 </div>
+
+                <!-- Description -->
+                <p class="text-sm text-muted-foreground mb-3 line-clamp-2 flex-1">{{ item.product.description|truncatewords:10 }}</p>
 
                 <!-- Stock Status -->
                 <div class="mb-3">
@@ -59,30 +72,28 @@
                 </div>
 
                 <!-- Price -->
-                <div class="mt-auto pt-3 border-t border-border">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xl font-bold text-cyan">${{ item.product.price }}</span>
-                        <span class="text-xs text-muted-foreground">Added {{ item.added_at|date:"M d, Y" }}</span>
-                    </div>
+                <div class="mb-3">
+                    <span class="text-xl font-bold text-cyan">${{ item.product.price|floatformat:2 }}</span>
+                    <p class="text-xs text-muted-foreground mt-1">Added {{ item.added_at|date:"M d, Y" }}</p>
+                </div>
 
-                    <!-- Actions -->
-                    <div class="flex gap-2" onclick="event.stopPropagation();">
-                        {% if item.product.stock > 0 %}
-                            <form method="post" action="{% url 'storefront:add_to_cart' item.product.sku %}" class="flex-1">
-                                {% csrf_token %}
-                                <input type="hidden" name="quantity" value="1">
-                                <input type="hidden" name="next" value="{% url 'storefront:watchlist' %}">
-                                <button type="submit" class="w-full px-4 py-2 bg-cyan text-white text-sm font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center justify-center gap-2">
-                                    <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                                    Add to Cart
-                                </button>
-                            </form>
-                        {% else %}
-                            <button disabled class="flex-1 px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-not-allowed">
-                                Out of Stock
+                <!-- Actions - Flush to bottom -->
+                <div class="mt-auto pt-3 border-t border-border" onclick="event.stopPropagation();">
+                    {% if item.product.stock > 0 %}
+                        <form method="post" action="{% url 'storefront:add_to_cart' item.product.sku %}" class="w-full">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="next" value="{% url 'storefront:watchlist' %}">
+                            <button type="submit" class="w-full px-4 py-2 bg-cyan text-white text-sm font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center justify-center gap-2">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                Add to Cart
                             </button>
-                        {% endif %}
-                    </div>
+                        </form>
+                    {% else %}
+                        <button disabled class="w-full px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-not-allowed">
+                            Out of Stock
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>

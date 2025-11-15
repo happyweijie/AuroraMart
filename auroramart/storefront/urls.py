@@ -32,4 +32,13 @@ urlpatterns = [
     path('watchlist/', views.watchlist_view, name='watchlist'),
     path('watchlist/add/<str:sku>/', views.add_to_watchlist, name='add_to_watchlist'),
     path('watchlist/remove/<str:sku>/', views.remove_from_watchlist, name='remove_from_watchlist'),
+    
+    # Chat Support
+    path('chat/', views.chat_list, name='chat_list'),
+    path('chat/create/', views.chat_create, name='chat_create'),
+    path('chat/<int:session_id>/', views.chat_detail, name='chat_detail'),
+    path('chat/<int:session_id>/close/', views.chat_close, name='chat_close'),
+    
+    # Flash Sale Products
+    path('flash-sale/', views.flash_sale_products, name='flash_sale_products'),
 ]
