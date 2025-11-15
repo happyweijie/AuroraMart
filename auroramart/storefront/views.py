@@ -7,6 +7,7 @@ from django.db import transaction
 from decimal import Decimal
 from .models import Product, Category, Cart, CartItem, Order, OrderItem
 from .forms import CheckoutForm
+from mlservices.get_recommendations import get_recommendations
 
 # Create your views here.
 def index(request):
@@ -312,11 +313,21 @@ def cart_view(request):
     
     # Determine if using database cart (only if user is authenticated AND has customer_profile)
     using_db_cart = request.user.is_authenticated and hasattr(request.user, 'customer_profile')
+
+    # recommendations based on cart items
+    recommendations = get_recommendations(
+        items=[item.product.sku for item in cart_items], 
+        metric='lift',
+        top_n=5)
+    print(recommendations)
+
+    frequently_bought_together = Product.objects.filter(sku__in=recommendations, is_active=True, archived=False)
     
     return render(request, 'storefront/cart.html', {
         'cart_items': cart_items,
         'total': total,
         'using_db_cart': using_db_cart,
+        'frequently_bought_together': frequently_bought_together,
     })
 
 
