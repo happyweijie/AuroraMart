@@ -6,11 +6,11 @@
     <!-- Sidebar -->
     <aside class="sidebar w-64 flex-shrink-0 flex flex-col">
         <!-- Logo -->
-        <div class="p-6 border-b border-white/10">
+        <div class="pr-6 py-6 border-b border-white/10 pl-2">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-10 h-10 object-contain">
-                    <span class="font-bold text-xl" style="color: #1e3a5f;">AuroraMart Admin</span>
+                    <img src="{% static 'logo.png' %}" alt="AuroraMart Logo" class="w-12 h-12 object-contain">
+                    <span class="font-bold text-xl text-white whitespace-nowrap">Admin Panel</span>
                 </div>
                 <!-- Back to Storefront Button -->
                 <a href="{% url 'storefront:home' %}" 
@@ -50,13 +50,6 @@
                    class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent {% if request.resolver_match.url_name == 'inventory' %}active{% endif %}">
                     <i data-lucide="warehouse" class="w-5 h-5"></i>
                     <span class="text-sm font-medium">Inventory Management</span>
-                </a>
-                
-                <!-- Pricing Management -->
-                <a href="{% url 'admin_panel:pricing' %}" 
-                   class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent {% if request.resolver_match.url_name == 'pricing' %}active{% endif %}">
-                    <i data-lucide="dollar-sign" class="w-5 h-5"></i>
-                    <span class="text-sm font-medium">Pricing Management</span>
                 </a>
                 
                 <!-- Customer Records -->
@@ -150,24 +143,6 @@
     
     <!-- Main Content Area -->
     <main class="flex-1 overflow-y-auto">
-        <!-- Header -->
-        <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-semibold text-foreground">{% block page_title %}Dashboard{% endblock %}</h1>
-                        <p class="text-sm text-muted-foreground mt-1">{% block page_description %}Welcome to AuroraMart Admin Panel{% endblock %}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <!-- Notifications (future feature) -->
-                        <!-- <button class="p-2 hover:bg-gray-100 rounded-lg" title="Notifications">
-                            <i data-lucide="bell" class="w-5 h-5 text-muted-foreground"></i>
-                        </button> -->
-                    </div>
-                </div>
-            </div>
-        </header>
-        
         <!-- Page Content -->
         <div class="p-6">
             {% block page_content %}

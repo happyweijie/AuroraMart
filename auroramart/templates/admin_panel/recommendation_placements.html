@@ -16,7 +16,6 @@
         <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Slug</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Title</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Placement</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Strategy</th>
@@ -28,10 +27,8 @@
                 {% for placement in placements %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm font-mono text-foreground">{{ placement.slug }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-foreground">{{ placement.title }}</div>
+                        <div class="text-xs text-muted-foreground font-mono mt-1">{{ placement.slug }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="text-sm text-foreground">{{ placement.get_placement_display }}</span>
@@ -64,7 +61,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center">
+                    <td colspan="5" class="px-6 py-12 text-center">
                         <div class="text-muted-foreground">
                             <i data-lucide="settings" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
                             <p>No recommendation placements found</p>

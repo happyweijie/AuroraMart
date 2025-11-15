@@ -1,0 +1,155 @@
+{% extends "storefront_base.html" %}
+{% load category_icons %}
+{% load category_colors %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-8 text-white mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold mb-2 flex items-center gap-3">
+                    <i data-lucide="flame" class="w-10 h-10"></i>
+                    Flash Sale Products
+                </h1>
+                <p class="text-white/90 text-lg">Limited time offers - Don't miss out on these exclusive deals!</p>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-bold">{{ flash_sale_count }}</div>
+                <div class="text-white/80 text-sm">Products on Sale</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Products Grid -->
+    {% if page_obj %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {% for product in page_obj %}
+        <a href="{% url 'storefront:product_detail' product.sku %}" class="bg-white border border-border rounded-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 block group flex flex-col h-full">
+            <div class="aspect-square bg-gradient-to-br {{ product.category|category_gradient }} flex items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                <i data-lucide="{{ product.category|category_icon }}" class="w-24 h-24 text-white drop-shadow-lg relative z-10"></i>
+                
+                <!-- Flash Sale Badge -->
+                {% if product.active_promotion and product.is_flash_sale %}
+                <div class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold rounded-full z-10 animate-pulse shadow-lg">
+                    🔥 FLASH SALE
+                </div>
+                {% elif product.active_promotion %}
+                <div class="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold rounded-full z-10 shadow-lg">
+                    {{ product.active_promotion.discount_percent|floatformat:0 }}% OFF
+                </div>
+                {% endif %}
+                
+                <!-- Out of Stock Badge -->
+                {% if product.stock == 0 %}
+                <div class="absolute {% if product.active_promotion %}top-12{% else %}top-3{% endif %} left-3 px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-full z-10 shadow-md">
+                    Out of Stock
+                </div>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                <button onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:add_to_watchlist' product.sku %}?next=storefront:flash_sale_products';" 
+                        class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 z-10 shadow-md"
+                        title="Add to Watchlist">
+                    <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                </button>
+                {% endif %}
+            </div>
+            
+            <div class="p-5 flex flex-col flex-1">
+                <!-- Category -->
+                <p class="text-xs text-muted-foreground mb-2">
+                    {{ product.category.name }}
+                </p>
+                
+                <!-- Product Name with Rating -->
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <h3 class="text-lg font-semibold text-foreground line-clamp-2 flex-1">{{ product.name }}</h3>
+                    <div class="flex items-center gap-1 flex-shrink-0 mt-0.5">
+                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                        <span class="text-sm font-medium text-foreground">{{ product.rating|floatformat:1 }}</span>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <p class="text-sm text-muted-foreground mb-4 line-clamp-2 min-h-[2.5rem] flex-1">{{ product.description }}</p>
+                
+                <!-- Price -->
+                <div class="mb-3">
+                    {% if product.active_promotion and product.discounted_price %}
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-2xl font-bold text-red-600">${{ product.discounted_price|floatformat:2 }}</span>
+                            <span class="text-lg font-semibold text-gray-400 line-through">${{ product.price|floatformat:2 }}</span>
+                        </div>
+                        <p class="text-xs font-semibold text-red-600 mt-1">Save {{ product.active_promotion.discount_percent|floatformat:0 }}%</p>
+                    {% else %}
+                        <span class="text-2xl font-bold text-cyan">${{ product.price|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Stock Status -->
+                {% if product.stock > 0 and product.stock <= product.reorder_threshold %}
+                <p class="text-xs text-orange-500 mb-3 font-semibold">⚡ Only {{ product.stock }} left in stock!</p>
+                {% elif product.stock > 0 %}
+                <p class="text-xs text-green-600 mb-3">In Stock</p>
+                {% endif %}
+                
+                <!-- Add to Cart Button - Flush to bottom -->
+                <div class="mt-auto pt-4" onclick="event.stopPropagation();">
+                    {% if product.stock > 0 %}
+                    <form method="post" action="{% url 'storefront:add_to_cart' product.sku %}" class="w-full">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="next" value="{% url 'storefront:flash_sale_products' %}">
+                        <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white text-center rounded-lg hover:opacity-90 transition-opacity font-medium shadow-md">
+                            Add to Cart
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="w-full px-4 py-3 bg-gray-300 text-gray-600 text-center rounded-lg cursor-not-allowed font-medium" disabled>
+                        Out of Stock
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between border-t border-gray-200 pt-6">
+        <div class="text-sm text-muted-foreground">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-cyan text-white rounded-lg text-sm">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="bg-card border border-border rounded-lg p-12 text-center">
+        <i data-lucide="flame" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-foreground mb-2">No Flash Sale Products</h3>
+        <p class="text-sm text-muted-foreground">There are currently no products on flash sale. Check back soon!</p>
+        <a href="{% url 'storefront:home' %}" class="mt-4 inline-block px-6 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
+            Browse All Products
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

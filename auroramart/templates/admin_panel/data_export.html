@@ -6,12 +6,52 @@
 {% block page_content %}
 <!-- Header Actions -->
 <div class="mb-6">
-    <h2 class="text-xl font-semibold text-foreground mb-2">Data Export</h2>
-    <p class="text-sm text-muted-foreground">Export your data in CSV format</p>
+    <h2 class="text-xl font-semibold text-foreground mb-2">Data Import/Export</h2>
+    <p class="text-sm text-muted-foreground">Import and export data in CSV format</p>
+</div>
+
+<!-- Import Section -->
+<div class="mb-8">
+    <h3 class="text-lg font-semibold text-foreground mb-4">Import Data</h3>
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="upload" class="w-6 h-6 text-purple-500"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="text-lg font-semibold text-foreground">Import Customers</h4>
+                <p class="text-sm text-muted-foreground">Upload a CSV file to import customer records</p>
+            </div>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            <input type="hidden" name="import_type" value="customers">
+            <div class="flex items-center gap-4">
+                <input type="file" name="csv_file" accept=".csv" required
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 file:cursor-pointer">
+                <button type="submit" name="import" 
+                        class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2 whitespace-nowrap">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    <span>Import Customers CSV</span>
+                </button>
+            </div>
+        </form>
+        <div class="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <p class="text-xs font-medium text-purple-900 mb-2">CSV Format Requirements:</p>
+            <ul class="text-xs text-purple-800 space-y-1 list-disc list-inside">
+                <li>Required columns: <strong>Username</strong>, <strong>Email</strong></li>
+                <li>Optional columns: First Name, Last Name, Age, Gender, Household Size, Has Children, Monthly Income, Employment Status, Occupation, Education, Preferred Category</li>
+                <li>If a user already exists, their information will be updated</li>
+                <li>Export customers first to see the exact format</li>
+            </ul>
+        </div>
+    </div>
 </div>
 
 <!-- Export Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="mb-8">
+    <h3 class="text-lg font-semibold text-foreground mb-4">Export Data</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Export Products -->
     <div class="bg-white rounded-lg border border-gray-200 p-6">
         <div class="flex items-center gap-4 mb-4">
@@ -93,8 +133,8 @@
     <div class="flex items-start gap-3">
         <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
         <div class="text-sm text-blue-800">
-            <p class="font-medium mb-1">About Data Export</p>
-            <p>All exports are generated in CSV format and can be opened in Excel, Google Sheets, or any spreadsheet application. Files are timestamped automatically.</p>
+            <p class="font-medium mb-1">About Data Import/Export</p>
+            <p>All exports are generated in CSV format and can be opened in Excel, Google Sheets, or any spreadsheet application. Files are timestamped automatically. For importing, use the exported CSV format as a template.</p>
         </div>
     </div>
 </div>

@@ -1,0 +1,206 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Chat Support{% endblock %}
+{% block page_description %}Respond to customer support inquiries{% endblock %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Total Chats</p>
+                    <p class="text-2xl font-bold text-foreground">{{ total_count }}</p>
+                </div>
+                <i data-lucide="message-square" class="w-8 h-8 text-cyan"></i>
+            </div>
+        </div>
+        
+        <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Open Chats</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ open_count }}</p>
+                </div>
+                <i data-lucide="circle" class="w-8 h-8 text-orange-500 fill-current"></i>
+            </div>
+        </div>
+        
+        <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Closed Chats</p>
+                    <p class="text-2xl font-bold text-gray-600">{{ closed_count }}</p>
+                </div>
+                <i data-lucide="check-circle" class="w-8 h-8 text-gray-500"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card border border-border rounded-lg p-6">
+        <form method="get" action="{% url 'admin_panel:chat' %}" class="flex flex-col md:flex-row gap-4 items-end">
+            <!-- Status Filter -->
+            <div class="flex-1">
+                <label for="status" class="block text-sm font-medium text-foreground mb-2">Status</label>
+                <select name="status" id="status" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+                    <option value="open" {% if status_filter == 'open' %}selected{% endif %}>Open ({{ open_count }})</option>
+                    <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Closed ({{ closed_count }})</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Chats ({{ total_count }})</option>
+                </select>
+            </div>
+            
+            <!-- Search -->
+            <div class="flex-1">
+                <label for="q" class="block text-sm font-medium text-foreground mb-2">Search</label>
+                <input type="text" name="q" id="q" value="{{ search_query }}" 
+                       placeholder="Search by subject, customer, or email..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+            </div>
+            
+            <!-- Filter Button -->
+            <div>
+                <button type="submit" class="px-6 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filter
+                </button>
+            </div>
+            
+            <!-- Clear Filters -->
+            {% if status_filter != 'open' or search_query %}
+            <div>
+                <a href="{% url 'admin_panel:chat' %}" 
+                   class="px-6 py-2 border border-border text-foreground font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    Clear
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Chats Table -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+        {% if page_obj %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for session in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-foreground">
+                                <p class="font-medium">{{ session.customer.user.username }}</p>
+                                <p class="text-xs text-muted-foreground">{{ session.customer.user.email }}</p>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-foreground">{{ session.subject }}</div>
+                            {% if session.messages.first %}
+                            <p class="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                {{ session.messages.first.message|truncatewords:10 }}
+                            </p>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if session.order %}
+                            <a href="{% url 'admin_panel:admin_order_detail' session.order.id %}" 
+                               class="text-sm text-cyan hover:underline">
+                                Order #{{ session.order.id }}
+                            </a>
+                            {% else %}
+                            <span class="text-sm text-muted-foreground">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if session.status == 'open' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700">
+                                    <i data-lucide="circle" class="w-3 h-3 fill-current"></i>
+                                    Open
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Closed
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                            <div>{{ session.updated_at|date:"M d, Y" }}</div>
+                            <div class="text-xs">{{ session.updated_at|date:"g:i A" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                            {{ session.messages.count }} message{{ session.messages.count|pluralize }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'admin_panel:chat_detail' session.id %}" 
+                               class="text-cyan hover:text-cyan/80 flex items-center gap-1">
+                                <i data-lucide="message-square" class="w-4 h-4"></i>
+                                View Chat
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-4 border-t border-border flex items-center justify-between">
+            <div class="text-sm text-muted-foreground">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} chats
+            </div>
+            <div class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                   class="px-3 py-2 border border-border rounded-lg hover:bg-gray-100 text-sm font-medium text-foreground">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-2 text-sm font-medium text-foreground">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                   class="px-3 py-2 border border-border rounded-lg hover:bg-gray-100 text-sm font-medium text-foreground">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="p-12 text-center">
+            <i data-lucide="message-square" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+            <h3 class="text-lg font-medium text-foreground mb-2">No Chats Found</h3>
+            <p class="text-sm text-muted-foreground">
+                {% if status_filter == 'open' %}
+                    No open chat sessions.
+                {% elif status_filter == 'closed' %}
+                    No closed chat sessions.
+                {% else %}
+                    No chat sessions found.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

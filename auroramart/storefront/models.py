@@ -138,7 +138,7 @@ class Promotion(models.Model):
 	start_date = models.DateField()
 	end_date = models.DateField()
 	categories = models.ManyToManyField(Category, blank=True, related_name='promotions')
-	preferred_category = models.CharField(max_length=100, blank=True)
+	products = models.ManyToManyField('Product', blank=True, related_name='promotions')
 	is_active = models.BooleanField(default=True)
 
 	class Meta:
@@ -146,6 +146,16 @@ class Promotion(models.Model):
 
 	def __str__(self):
 		return self.name
+	
+	def applies_to_product(self, product):
+		"""Check if this promotion applies to a given product"""
+		# Check product-specific first (higher priority)
+		if self.products.filter(id=product.id).exists():
+			return True
+		# Check category-based
+		if self.categories.filter(id=product.category.id).exists():
+			return True
+		return False
 
 
 class Watchlist(models.Model):

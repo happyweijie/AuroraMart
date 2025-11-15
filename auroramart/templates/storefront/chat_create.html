@@ -1,0 +1,79 @@
+{% extends "storefront_base.html" %}
+
+{% block title %}Contact Support - AuroraMart{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-foreground mb-2">Contact Support</h1>
+        <p class="text-muted-foreground">Send us a message and our team will respond as soon as possible</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-lg p-8">
+        {% if form.non_field_errors or message_form.non_field_errors %}
+        <div class="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive">
+            {% for error in form.non_field_errors %}
+            <p class="text-sm">{{ error }}</p>
+            {% endfor %}
+            {% for error in message_form.non_field_errors %}
+            <p class="text-sm">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Subject Field -->
+            <div>
+                <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Subject <span class="text-red-500">*</span>
+                </label>
+                {{ form.subject }}
+                {% if form.subject.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.subject.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-muted-foreground">Brief description of your inquiry</p>
+            </div>
+
+            <!-- Order Field (Optional) -->
+            <div>
+                <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Related Order (Optional)
+                </label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-muted-foreground">If your inquiry is related to an order, please select it</p>
+            </div>
+
+            <!-- Message Field -->
+            <div>
+                <label for="{{ message_form.message.id_for_label }}" class="block text-sm font-medium text-foreground mb-2">
+                    Message <span class="text-red-500">*</span>
+                </label>
+                {{ message_form.message }}
+                {% if message_form.message.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ message_form.message.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-muted-foreground">Please provide as much detail as possible</p>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center gap-4 pt-4">
+                <button type="submit" class="px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    Send Message
+                </button>
+                <a href="{% url 'storefront:chat_list' %}" 
+                   class="px-6 py-3 border border-border text-foreground font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

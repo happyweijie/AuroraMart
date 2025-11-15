@@ -1,0 +1,148 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_description %}Create or edit promotional campaigns{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <nav class="flex items-center gap-2 text-sm text-muted-foreground">
+            <a href="{% url 'admin_panel:dashboard' %}" class="hover:text-foreground">Dashboard</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'admin_panel:promotions' %}" class="hover:text-foreground">Promotions</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-foreground">{{ page_title }}</span>
+        </nav>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Display form errors -->
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <ul class="list-disc list-inside text-sm text-red-700">
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Form Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Name -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Description -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Description
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Discount Percent -->
+                <div>
+                    <label for="{{ form.discount_percent.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Discount (%) <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.discount_percent }}
+                    {% if form.discount_percent.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.discount_percent.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-muted-foreground">Enter a value between 0 and 100</p>
+                </div>
+                
+                <!-- Active Status -->
+                <div class="flex items-end">
+                    <div class="flex items-center gap-2">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-foreground">
+                            Active
+                        </label>
+                    </div>
+                    {% if form.is_active.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Start Date -->
+                <div>
+                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Start Date <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- End Date -->
+                <div>
+                    <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        End Date <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.end_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Categories -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.categories.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        Apply to Categories
+                    </label>
+                    <p class="text-xs text-muted-foreground mb-2">Select one or more categories. The discount will apply to ALL products in the selected categories. You can also add specific products below.</p>
+                    {{ form.categories }}
+                    {% if form.categories.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.categories.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-muted-foreground">Hold Ctrl/Cmd (⌘) to select multiple categories</p>
+                </div>
+                
+                <!-- Products -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.products.id_for_label }}" class="block text-sm font-medium text-foreground mb-1">
+                        AND/OR Apply to Specific Products
+                    </label>
+                    <p class="text-xs text-muted-foreground mb-2">Optionally select individual products to add to this promotion. You can combine categories above with specific products here. Product-specific promotions take priority over category promotions.</p>
+                    {{ form.products }}
+                    {% if form.products.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.products.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-muted-foreground">Hold Ctrl/Cmd (⌘) to select multiple products</p>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'admin_panel:promotions' %}" 
+                   class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-cyan text-white rounded-lg hover:bg-cyan/90 transition-colors">
+                    {% if promotion %}Update Promotion{% else %}Create Promotion{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

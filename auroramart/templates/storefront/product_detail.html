@@ -59,9 +59,31 @@
 
             <!-- Price -->
             <div class="border-t border-b border-border py-6">
+                {% if active_promotion and discounted_price %}
+                <!-- Promotion Active -->
+                <div class="mb-3">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg font-semibold mb-3">
+                        <i data-lucide="tag" class="w-5 h-5"></i>
+                        <span>{{ active_promotion.discount_percent|floatformat:0 }}% OFF - {{ active_promotion.name }}</span>
+                    </div>
+                    {% if active_promotion.description %}
+                    <p class="text-sm text-muted-foreground mt-2">{{ active_promotion.description }}</p>
+                    {% endif %}
+                    <p class="text-xs text-muted-foreground mt-1">Valid until {{ active_promotion.end_date|date:"M d, Y" }}</p>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <span class="text-4xl font-bold text-cyan">${{ discounted_price|floatformat:2 }}</span>
+                    <span class="text-2xl font-semibold text-gray-400 line-through">${{ product.price|floatformat:2 }}</span>
+                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold">
+                        Save {{ active_promotion.discount_percent|floatformat:0 }}%
+                    </span>
+                </div>
+                {% else %}
+                <!-- Regular Price -->
                 <div class="flex items-baseline gap-2">
                     <span class="text-4xl font-bold text-cyan">${{ product.price }}</span>
                 </div>
+                {% endif %}
             </div>
 
             <!-- Stock Status -->
@@ -109,8 +131,8 @@
                     {% else %}
                         <a href="{% url 'storefront:add_to_watchlist' product.sku %}?next=storefront:product_detail" 
                            class="px-6 py-3 border-2 border-cyan text-cyan font-medium rounded-lg hover:bg-cyan hover:text-white transition-colors flex items-center justify-center gap-2">
-                            <i data-lucide="heart" class="w-5 h-5"></i>
-                            Add to Watchlist
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                        Add to Watchlist
                         </a>
                     {% endif %}
                 {% endif %}
@@ -118,15 +140,15 @@
         </div>
     </div>
 
-    <!-- Products Related To This Item -->
-    {% if similar_items %}
+    <!-- Products Related To This Item - ML Recommendations -->
+    {% if similar_items and recommendation_placement %}
     <div class="border-t border-border pt-12">
         <h2 class="text-2xl font-bold text-foreground mb-6">Products related to this item</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             {% for prod in similar_items %}
             <a href="{% url 'storefront:product_detail' prod.sku %}" class="bg-card border border-border rounded-lg p-4 flex flex-col hover:shadow-lg transition-shadow group">
                 <div class="w-full h-32 bg-gray-100 rounded-md flex items-center justify-center relative mb-2">
-                    <i data-lucide="package" class="w-8 h-8 text-gray-400"></i>
+                        <i data-lucide="package" class="w-8 h-8 text-gray-400"></i>
                     {% if user.is_authenticated %}
                     <button onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:add_to_watchlist' prod.sku %}?next=storefront:product_detail';" 
                             class="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 z-10"
@@ -134,7 +156,7 @@
                         <i data-lucide="heart" class="w-3 h-3 text-gray-600"></i>
                     </button>
                     {% endif %}
-                </div>
+                    </div>
                 <h3 class="font-medium text-foreground mt-2 line-clamp-2 mb-1">{{ prod.name }}</h3>
                 <p class="text-xs text-muted-foreground mb-2">SKU: {{ prod.sku }}</p>
                 <div class="mt-auto pt-3 flex items-center justify-between">

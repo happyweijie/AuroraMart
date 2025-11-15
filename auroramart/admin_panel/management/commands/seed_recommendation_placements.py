@@ -32,7 +32,7 @@ class Command(BaseCommand):
                 'slug': 'category_explore',
                 'placement': 'category',
                 'title': 'Explore Similar Products',
-                'strategy': 'decision_tree',
+                'strategy': 'association_rules',
                 'is_active': True,
             },
         ]
