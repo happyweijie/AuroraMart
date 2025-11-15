@@ -2,28 +2,199 @@
 {% load category_icons %}
 
 {% block page_content %}
-<div class="space-y-8">
-    <!-- Welcome Banner -->
-    <div class="bg-gradient-to-br from-cyan to-purple-500 rounded-lg p-8 text-white">
-        <h1 class="text-4xl font-bold mb-4">Welcome to AuroraMart</h1>
-        <p class="text-lg mb-6">Discover amazing products with personalized recommendations just for you</p>
-        <a href="{% url 'storefront:products' %}" 
-           class="inline-flex items-center gap-2 px-6 py-3 bg-white text-foreground font-medium rounded-lg hover:bg-gray-100 transition-colors">
-            <span>Shop Now</span>
-            <i data-lucide="arrow-right" class="w-5 h-5"></i>
-        </a>
+<div class="space-y-16">
+    <!-- Hero Section - Large, Prominent -->
+    <div class="bg-gradient-to-br from-cyan to-purple-500 rounded-xl p-12 text-white shadow-lg">
+        <div class="max-w-3xl">
+            <h1 class="text-5xl font-bold mb-4">Welcome to AuroraMart</h1>
+            <p class="text-xl mb-8 text-white/90">Discover amazing products with personalized recommendations tailored just for you</p>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'storefront:products' %}" 
+                   class="inline-flex items-center gap-2 px-8 py-4 bg-white text-cyan font-semibold rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg">
+                    <span>Shop Now</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'users:register' %}" 
+                   class="inline-flex items-center gap-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white font-semibold rounded-lg hover:bg-white/30 transition-all border-2 border-white/30">
+                    <span>Get Personalized Recommendations</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
     </div>
     
-    <!-- Featured Categories -->
-    <div>
-        <h2 class="text-2xl font-semibold text-foreground mb-6">Shop by Category</h2>
+    <!-- Just For You (Personalized) - PROMINENT for logged-in users -->
+    {% if for_you_products and user.is_authenticated %}
+    <div class="bg-gradient-to-br from-cyan/5 to-purple-50 rounded-xl p-8 border-2 border-cyan/20">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+                    <i data-lucide="sparkles" class="w-8 h-8 text-cyan"></i>
+                    Just For You
+                </h2>
+                <p class="text-muted-foreground">Curated recommendations based on your preferences and browsing history</p>
+            </div>
+            <a href="{% url 'storefront:products' %}" 
+               class="text-cyan font-medium hover:underline flex items-center gap-2">
+                View All <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in for_you_products %}
+            <a href="{% url 'storefront:product_detail' product.sku %}" class="bg-white border border-border rounded-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 block group">
+                <div class="aspect-square bg-gray-100 flex items-center justify-center relative">
+                    <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
+                    {% if product.stock == 0 %}
+                    <div class="absolute top-3 left-3 px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-full shadow-md">
+                        Out of Stock
+                    </div>
+                    {% elif product.rating >= 4.5 %}
+                    <div class="absolute top-3 left-3 px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+                        <i data-lucide="award" class="w-3 h-3"></i>
+                        Best Seller
+                    </div>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <button onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:add_to_watchlist' product.sku %}?next=storefront:home';" 
+                            class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 z-10 shadow-md"
+                            title="Add to Watchlist">
+                        <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2">{{ product.name }}</h3>
+                    <p class="text-sm text-muted-foreground mb-3 line-clamp-2">{{ product.description }}</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                            <span class="text-sm font-medium text-foreground">{{ product.rating|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                    {% if product.review_count > 0 %}
+                    <p class="text-xs text-muted-foreground mb-2">
+                        <i data-lucide="users" class="w-3 h-3 inline"></i>
+                        {{ product.review_count }} review{{ product.review_count|pluralize }}
+                    </p>
+                    {% endif %}
+                    {% if product.stock > 0 %}
+                    <form method="post" action="{% url 'storefront:add_to_cart' product.sku %}" onclick="event.stopPropagation();" class="mt-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="next" value="{% url 'storefront:home' %}">
+                        <button type="submit" class="w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors font-medium">
+                            Add to Cart
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Trending Now (For Non-Logged-In Users) -->
+    {% if trending_products %}
+    <div class="space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+                    <i data-lucide="trending-up" class="w-8 h-8 text-orange-500"></i>
+                    Trending Now
+                </h2>
+                <p class="text-muted-foreground">Most popular products based on ratings and customer reviews</p>
+            </div>
+            <a href="{% url 'storefront:products' %}" 
+               class="text-cyan font-medium hover:underline flex items-center gap-2">
+                View All <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in trending_products %}
+            <a href="{% url 'storefront:product_detail' product.sku %}" class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 block group">
+                <div class="aspect-square bg-gray-100 flex items-center justify-center relative">
+                    <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
+                    {% if product.stock == 0 %}
+                    <div class="absolute top-3 left-3 px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-full shadow-md">
+                        Out of Stock
+                    </div>
+                    {% elif product.rating >= 4.5 %}
+                    <div class="absolute top-3 left-3 px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+                        <i data-lucide="award" class="w-3 h-3"></i>
+                        Best Seller
+                    </div>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <button onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:add_to_watchlist' product.sku %}?next=storefront:home';" 
+                            class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 z-10 shadow-md"
+                            title="Add to Watchlist">
+                        <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2">{{ product.name }}</h3>
+                    <p class="text-sm text-muted-foreground mb-3 line-clamp-2">{{ product.description }}</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                            <span class="text-sm font-medium text-foreground">{{ product.rating|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                    {% if product.review_count > 0 %}
+                    <p class="text-xs text-muted-foreground mb-2">
+                        <i data-lucide="users" class="w-3 h-3 inline"></i>
+                        {{ product.review_count }} review{{ product.review_count|pluralize }}
+                    </p>
+                    {% endif %}
+                    {% if product.stock > 0 %}
+                    <form method="post" action="{% url 'storefront:add_to_cart' product.sku %}" onclick="event.stopPropagation();" class="mt-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="next" value="{% url 'storefront:home' %}">
+                        <button type="submit" class="w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors font-medium">
+                            Add to Cart
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Shop by Category - Better positioned and styled -->
+    <div class="bg-gray-50 rounded-xl p-8 border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+                    <i data-lucide="grid" class="w-8 h-8 text-cyan"></i>
+                    Shop by Category
+                </h2>
+                <p class="text-muted-foreground">Browse our curated product categories</p>
+            </div>
+            <a href="{% url 'storefront:products' %}" 
+               class="text-cyan font-medium hover:underline flex items-center gap-2">
+                View All Categories <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
         {% if categories %}
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {% for category in categories %}
             <a href="{% url 'storefront:category' category.slug %}" 
-               class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center">
-                <i data-lucide="{{ category|category_icon }}" class="w-8 h-8 text-cyan mx-auto mb-3"></i>
-                <h3 class="text-sm font-medium text-foreground">{{ category.name }}</h3>
+               class="bg-white border border-border rounded-lg p-6 hover:shadow-lg hover:border-cyan transition-all transform hover:-translate-y-1 text-center group">
+                <div class="mb-3">
+                    <i data-lucide="{{ category|category_icon }}" class="w-10 h-10 text-cyan mx-auto group-hover:scale-110 transition-transform"></i>
+                </div>
+                <h3 class="text-sm font-semibold text-foreground mb-1">{{ category.name }}</h3>
+                {% if category.product_count > 0 %}
+                <p class="text-xs text-muted-foreground">{{ category.product_count }} product{{ category.product_count|pluralize }}</p>
+                {% endif %}
             </a>
             {% endfor %}
         </div>
@@ -36,15 +207,44 @@
         {% endif %}
     </div>
     
-     <!-- Featured Products -->
-    <div>
-        <h2 class="text-2xl font-semibold text-foreground mb-6">Featured Products</h2>
-        {% if featured_products %}
+    <!-- Featured Products / Best Sellers -->
+    {% if featured_products %}
+    <div class="space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+                    <i data-lucide="star" class="w-8 h-8 text-yellow-500"></i>
+                    Best Sellers
+                </h2>
+                <p class="text-muted-foreground">Top-rated products loved by our customers</p>
+            </div>
+            <a href="{% url 'storefront:products' %}?sort=rating" 
+               class="text-cyan font-medium hover:underline flex items-center gap-2">
+                View All <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for product in featured_products %}
-            <div class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div class="aspect-square bg-gray-100 flex items-center justify-center">
+            <a href="{% url 'storefront:product_detail' product.sku %}" class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 block group">
+                <div class="aspect-square bg-gray-100 flex items-center justify-center relative">
                     <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
+                    {% if product.stock == 0 %}
+                    <div class="absolute top-3 left-3 px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-full shadow-md">
+                        Out of Stock
+                    </div>
+                    {% elif product.rating >= 4.5 %}
+                    <div class="absolute top-3 left-3 px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+                        <i data-lucide="award" class="w-3 h-3"></i>
+                        Best Seller
+                    </div>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <button onclick="event.preventDefault(); event.stopPropagation(); window.location.href='{% url 'storefront:add_to_watchlist' product.sku %}?next=storefront:home';" 
+                            class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 z-10 shadow-md"
+                            title="Add to Watchlist">
+                        <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                    {% endif %}
                 </div>
                 <div class="p-4">
                     <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2">{{ product.name }}</h3>
@@ -53,103 +253,35 @@
                         <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
                         <div class="flex items-center gap-1">
                             <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                            <span class="text-sm text-foreground">{{ product.rating }}</span>
+                            <span class="text-sm font-medium text-foreground">{{ product.rating|floatformat:1 }}</span>
                         </div>
                     </div>
+                    {% if product.review_count > 0 %}
+                    <p class="text-xs text-muted-foreground mb-2">
+                        <i data-lucide="users" class="w-3 h-3 inline"></i>
+                        {{ product.review_count }} review{{ product.review_count|pluralize }}
+                    </p>
+                    {% endif %}
                     {% if product.stock > 0 %}
-                    <a href="{% url 'storefront:product_detail' product.sku %}" 
-                       class="block w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors">
-                        View Details
-                    </a>
-                    {% else %}
-                    <button disabled class="block w-full px-4 py-2 bg-gray-300 text-gray-500 text-center rounded-lg cursor-not-allowed">
-                        Out of Stock
-                    </button>
+                    <form method="post" action="{% url 'storefront:add_to_cart' product.sku %}" onclick="event.stopPropagation();" class="mt-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="next" value="{% url 'storefront:home' %}">
+                        <button type="submit" class="w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors font-medium">
+                            Add to Cart
+                        </button>
+                    </form>
                     {% endif %}
                 </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="bg-card border border-border rounded-lg p-12 text-center">
-            <i data-lucide="package" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
-            <h3 class="text-lg font-medium text-foreground mb-2">No Products Available</h3>
-            <p class="text-sm text-muted-foreground">Check back soon for amazing products</p>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Just For You (Personalized) -->
-    {% if for_you_products %}
-    <div>
-        <h2 class="text-2xl font-semibold text-foreground mb-6">Just For You</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for product in for_you_products %}
-            <div class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div class="aspect-square bg-gray-100 flex items-center justify-center">
-                    <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2">{{ product.name }}</h3>
-                    <p class="text-sm text-muted-foreground mb-3 line-clamp-2">{{ product.description }}</p>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
-                        <div class="flex items-center gap-1">
-                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                            <span class="text-sm text-foreground">{{ product.rating }}</span>
-                        </div>
-                    </div>
-                    {% if product.stock > 0 %}
-                    <a href="{% url 'storefront:product_detail' product.sku %}" 
-                       class="block w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors">
-                        View Details
-                    </a>
-                    {% else %}
-                    <button disabled class="block w-full px-4 py-2 bg-gray-300 text-gray-500 text-center rounded-lg cursor-not-allowed">
-                        Out of Stock
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
     </div>
-    {% endif %}
-
-    <!-- Trending Now (For Non-Logged-In Users) -->
-    {% if trending_products %}
-    <div>
-        <h2 class="text-2xl font-semibold text-foreground mb-6">Trending Now</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for product in trending_products %}
-            <div class="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div class="aspect-square bg-gray-100 flex items-center justify-center">
-                    <i data-lucide="package" class="w-16 h-16 text-gray-400"></i>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-lg font-semibold text-foreground mb-2 line-clamp-2">{{ product.name }}</h3>
-                    <p class="text-sm text-muted-foreground mb-3 line-clamp-2">{{ product.description }}</p>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-2xl font-bold text-cyan">${{ product.price }}</span>
-                        <div class="flex items-center gap-1">
-                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                            <span class="text-sm text-foreground">{{ product.rating }}</span>
-                        </div>
-                    </div>
-                    {% if product.stock > 0 %}
-                    <a href="{% url 'storefront:product_detail' product.sku %}" 
-                       class="block w-full px-4 py-2 bg-cyan text-white text-center rounded-lg hover:bg-cyan/90 transition-colors">
-                        View Details
-                    </a>
-                    {% else %}
-                    <button disabled class="block w-full px-4 py-2 bg-gray-300 text-gray-500 text-center rounded-lg cursor-not-allowed">
-                        Out of Stock
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+    {% else %}
+    <div class="bg-card border border-border rounded-lg p-12 text-center">
+        <i data-lucide="package" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-foreground mb-2">No Products Available</h3>
+        <p class="text-sm text-muted-foreground">Check back soon for amazing products</p>
     </div>
     {% endif %}
 </div>
