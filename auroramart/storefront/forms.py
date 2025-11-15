@@ -1,4 +1,5 @@
 from django import forms
+from .models import Review
 
 
 class CheckoutForm(forms.Form):
@@ -55,3 +56,44 @@ class CheckoutForm(forms.Form):
     def get_formatted_address(self):
         """Returns the formatted shipping address"""
         return f"{self.cleaned_data['street_address']}, {self.cleaned_data['city']}, {self.cleaned_data['postal_code']}, {self.cleaned_data['country']}"
+
+
+class ReviewForm(forms.ModelForm):
+    """Form for submitting product reviews"""
+    
+    rating = forms.IntegerField(
+        widget=forms.HiddenInput(attrs={
+            'id': 'rating-input',
+        }),
+        required=True
+    )
+    
+    class Meta:
+        model = Review
+        fields = ['rating', 'title', 'comment']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent',
+                'placeholder': 'Review Title (Optional)',
+                'maxlength': '100'
+            }),
+            'comment': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent',
+                'rows': 6,
+                'placeholder': 'Share your experience with this product...',
+                'required': True,
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rating'].required = True
+        self.fields['comment'].required = True
+    
+    def clean_rating(self):
+        rating = self.cleaned_data.get('rating')
+        if rating is not None:
+            rating = int(rating)  # Convert choice to integer
+            if rating < 1 or rating > 5:
+                raise forms.ValidationError('Rating must be between 1 and 5.')
+        return rating

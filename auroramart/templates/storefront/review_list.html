@@ -1,0 +1,148 @@
+{% extends "storefront_base.html" %}
+
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-foreground mb-2">My Reviews</h1>
+        <p class="text-muted-foreground">View and track the status of your product reviews</p>
+    </div>
+
+    <!-- Review Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-card border border-border rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Total Reviews</p>
+                    <p class="text-2xl font-bold text-foreground">{{ total_count }}</p>
+                </div>
+                <i data-lucide="message-square" class="w-8 h-8 text-cyan"></i>
+            </div>
+        </div>
+        
+        <div class="bg-card border border-border rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Approved</p>
+                    <p class="text-2xl font-bold text-green-600">{{ approved_count }}</p>
+                </div>
+                <i data-lucide="check-circle" class="w-8 h-8 text-green-500"></i>
+            </div>
+        </div>
+        
+        <div class="bg-card border border-border rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Pending</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ pending_count }}</p>
+                </div>
+                <i data-lucide="clock" class="w-8 h-8 text-yellow-500"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    {% if reviews %}
+        <div class="space-y-4">
+            {% for review in reviews %}
+            <div class="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <!-- Product Info -->
+                        <div class="flex items-start gap-4 mb-3">
+                            <div class="flex-1">
+                                <a href="{% url 'storefront:product_detail' review.product.sku %}" 
+                                   class="text-lg font-semibold text-foreground hover:text-cyan">
+                                    {{ review.product.name }}
+                                </a>
+                                <p class="text-sm text-muted-foreground mt-1">SKU: {{ review.product.sku }}</p>
+                            </div>
+                            
+                            <!-- Rating Display -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-yellow-400"></i>
+                                        {% else %}
+                                            <i data-lucide="star" class="w-5 h-5 text-gray-300"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="text-lg font-semibold text-foreground">{{ review.rating }}/5</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Review Title -->
+                        {% if review.title %}
+                        <h3 class="font-semibold text-foreground mb-2">{{ review.title }}</h3>
+                        {% endif %}
+                        
+                        <!-- Review Comment -->
+                        {% if review.comment %}
+                        <p class="text-muted-foreground leading-relaxed mb-3">{{ review.comment }}</p>
+                        {% endif %}
+                        
+                        <!-- Review Meta -->
+                        <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                Submitted: {{ review.created_at|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Badge -->
+                    <div>
+                        {% if review.is_approved %}
+                            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                Approved
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700">
+                                <i data-lucide="clock" class="w-4 h-4"></i>
+                                Pending
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-3 pt-4 border-t border-border">
+                    <a href="{% url 'storefront:product_detail' review.product.sku %}" 
+                       class="text-sm text-cyan hover:text-cyan/80 font-medium flex items-center gap-1">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        View Product
+                    </a>
+                    {% if not review.is_approved %}
+                        <span class="text-xs text-muted-foreground flex items-center gap-1">
+                            <i data-lucide="info" class="w-3 h-3"></i>
+                            Waiting for admin approval
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-green-600 flex items-center gap-1">
+                            <i data-lucide="check-circle" class="w-3 h-3"></i>
+                            Published on product page
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-card border border-border rounded-lg p-12 text-center">
+            <i data-lucide="message-square" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+            <h3 class="text-lg font-medium text-foreground mb-2">No Reviews Yet</h3>
+            <p class="text-sm text-muted-foreground mb-6">You haven't submitted any reviews yet. Start reviewing products you've purchased!</p>
+            <a href="{% url 'storefront:products' %}" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                Browse Products
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

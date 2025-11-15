@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 
-from storefront.models import Product, Order, OrderItem, Category
+from storefront.models import Product, Order, OrderItem, Category, Review
 from users.models import Customer
 from admin_panel.models import RecommendationPlacement, AnalyticsMetric, AuditLog
 from .decorators import staff_required
@@ -20,6 +20,11 @@ def admin_login(request):
     # Redirect if already authenticated and is staff
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('admin_panel:dashboard')
+    
+    # Clear any existing messages from other parts of the app (consume all messages)
+    list(messages.get_messages(request))
+    
+    login_messages = []
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -36,8 +41,13 @@ def admin_login(request):
                 messages.error(request, 'You do not have permission to access the admin panel.')
         else:
             messages.error(request, 'Invalid username or password.')
+        
+        # Only show messages that were just created (login-related)
+        login_messages = list(messages.get_messages(request))
     
-    return render(request, 'admin_panel/admin_login.html')
+    return render(request, 'admin_panel/admin_login.html', {
+        'login_messages': login_messages
+    })
 
 
 @staff_required
@@ -519,13 +529,192 @@ def order_management(request):
     return redirect('admin_panel:admin_order_list')
 
 
+def _recalculate_product_rating(product):
+    """Recalculate and update product rating based on approved reviews"""
+    approved_reviews = Review.objects.filter(product=product, is_approved=True)
+    total_reviews = approved_reviews.count()
+    
+    if total_reviews > 0:
+        average_rating = sum(review.rating for review in approved_reviews) / total_reviews
+        product.rating = round(Decimal(str(average_rating)), 2)
+    else:
+        product.rating = Decimal('0.0')
+    product.save()
+
+
 @staff_required
 def review_management(request):
-    """Review management view - placeholder"""
-    return render(request, 'admin_panel/placeholder.html', {
-        'page_title': 'Review Management',
-        'page_description': 'Moderate and manage product reviews'
-    })
+    """Review moderation and management view"""
+    status_filter = request.GET.get('status', 'pending')  # pending, approved, all
+    search_query = request.GET.get('q', '').strip()
+    
+    # Base queryset
+    reviews = Review.objects.select_related('product', 'product__category', 'customer', 'customer__user').all()
+    
+    # Apply status filter
+    if status_filter == 'pending':
+        reviews = reviews.filter(is_approved=False)
+    elif status_filter == 'approved':
+        reviews = reviews.filter(is_approved=True)
+    # 'all' shows everything
+    
+    # Apply search filter
+    if search_query:
+        reviews = reviews.filter(
+            Q(product__name__icontains=search_query) |
+            Q(product__sku__icontains=search_query) |
+            Q(customer__user__username__icontains=search_query) |
+            Q(customer__user__email__icontains=search_query) |
+            Q(comment__icontains=search_query) |
+            Q(title__icontains=search_query)
+        )
+    
+    # Handle bulk actions
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        review_ids = request.POST.getlist('review_ids')
+        
+        if action == 'approve' and review_ids:
+            # Get products that need rating recalculation
+            products_to_update = set()
+            updated_count = 0
+            
+            for review_id in review_ids:
+                try:
+                    review = Review.objects.get(id=review_id)
+                    if not review.is_approved:
+                        review.is_approved = True
+                        review.save()
+                        products_to_update.add(review.product)
+                        updated_count += 1
+                        
+                        # Create audit log
+                        AuditLog.objects.create(
+                            actor=request.user,
+                            action='update',
+                            entity_type='Review',
+                            entity_id=str(review.id),
+                            summary=f'Approved review for {review.product.name}'
+                        )
+                except Review.DoesNotExist:
+                    pass
+            
+            # Recalculate ratings for affected products
+            for product in products_to_update:
+                _recalculate_product_rating(product)
+            
+            messages.success(request, f'{updated_count} review(s) approved successfully.')
+            return redirect('admin_panel:reviews')
+        
+        elif action == 'reject' and review_ids:
+            # For reject, we delete the review
+            products_to_update = set()
+            deleted_count = 0
+            
+            for review_id in review_ids:
+                try:
+                    review = Review.objects.get(id=review_id)
+                    product = review.product
+                    product_name = product.name
+                    products_to_update.add(product)
+                    
+                    # Create audit log before deleting
+                    AuditLog.objects.create(
+                        actor=request.user,
+                        action='delete',
+                        entity_type='Review',
+                        entity_id=str(review.id),
+                        summary=f'Rejected review for {product_name}'
+                    )
+                    review.delete()
+                    deleted_count += 1
+                except Review.DoesNotExist:
+                    pass
+            
+            # Recalculate ratings for affected products
+            for product in products_to_update:
+                _recalculate_product_rating(product)
+            
+            messages.success(request, f'{deleted_count} review(s) rejected and deleted.')
+            return redirect('admin_panel:reviews')
+    
+    # Order by most recent first
+    reviews = reviews.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(reviews, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Counts for status badges
+    pending_count = Review.objects.filter(is_approved=False).count()
+    approved_count = Review.objects.filter(is_approved=True).count()
+    total_count = Review.objects.count()
+    
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'total_count': total_count,
+    }
+    
+    return render(request, 'admin_panel/review_moderation.html', context)
+
+
+@staff_required
+def review_approve(request, review_id):
+    """Approve a single review"""
+    review = get_object_or_404(Review, id=review_id)
+    
+    if not review.is_approved:
+        review.is_approved = True
+        review.save()
+        
+        # Recalculate product rating
+        _recalculate_product_rating(review.product)
+        
+        # Create audit log
+        AuditLog.objects.create(
+            actor=request.user,
+            action='update',
+            entity_type='Review',
+            entity_id=str(review.id),
+            summary=f'Approved review for {review.product.name}'
+        )
+        
+        messages.success(request, f'Review for {review.product.name} has been approved.')
+    else:
+        messages.info(request, f'Review for {review.product.name} is already approved.')
+    
+    return redirect('admin_panel:reviews')
+
+
+@staff_required
+def review_reject(request, review_id):
+    """Reject and delete a review"""
+    review = get_object_or_404(Review, id=review_id)
+    product = review.product
+    product_name = product.name
+    review_id_str = str(review.id)
+    
+    # Create audit log before deleting
+    AuditLog.objects.create(
+        actor=request.user,
+        action='delete',
+        entity_type='Review',
+        entity_id=review_id_str,
+        summary=f'Rejected review for {product_name}'
+    )
+    
+    review.delete()
+    
+    # Recalculate product rating
+    _recalculate_product_rating(product)
+    
+    messages.success(request, f'Review for {product_name} has been rejected and deleted.')
+    return redirect('admin_panel:reviews')
 
 
 @staff_required

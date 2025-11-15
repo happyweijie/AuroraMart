@@ -1,0 +1,295 @@
+{% extends "admin_base.html" %}
+
+{% block page_title %}Review Moderation{% endblock %}
+{% block page_description %}Moderate and manage product reviews submitted by customers{% endblock %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Total Reviews</p>
+                    <p class="text-2xl font-bold text-foreground">{{ total_count }}</p>
+                </div>
+                <i data-lucide="message-square" class="w-8 h-8 text-cyan"></i>
+            </div>
+        </div>
+        
+        <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Pending Review</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ pending_count }}</p>
+                </div>
+                <i data-lucide="clock" class="w-8 h-8 text-yellow-500"></i>
+            </div>
+        </div>
+        
+        <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-1">Approved</p>
+                    <p class="text-2xl font-bold text-green-600">{{ approved_count }}</p>
+                </div>
+                <i data-lucide="check-circle" class="w-8 h-8 text-green-500"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Actions -->
+    <div class="bg-card border border-border rounded-lg p-6">
+        <form method="get" action="{% url 'admin_panel:reviews' %}" class="flex flex-col md:flex-row gap-4 items-end">
+            <!-- Status Filter -->
+            <div class="flex-1">
+                <label for="status" class="block text-sm font-medium text-foreground mb-2">Status</label>
+                <select name="status" id="status" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending ({{ pending_count }})</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved ({{ approved_count }})</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Reviews ({{ total_count }})</option>
+                </select>
+            </div>
+            
+            <!-- Search -->
+            <div class="flex-1">
+                <label for="q" class="block text-sm font-medium text-foreground mb-2">Search</label>
+                <input type="text" name="q" id="q" value="{{ search_query }}" 
+                       placeholder="Search by product, customer, or review content..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent">
+            </div>
+            
+            <!-- Filter Button -->
+            <div>
+                <button type="submit" class="px-6 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filter
+                </button>
+            </div>
+            
+            <!-- Clear Filters -->
+            {% if status_filter != 'pending' or search_query %}
+            <div>
+                <a href="{% url 'admin_panel:reviews' %}" 
+                   class="px-6 py-2 border border-border text-foreground font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    Clear
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Reviews Table -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+        <form method="post" action="{% url 'admin_panel:reviews' %}" id="bulk-action-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="bulk-action" value="">
+            
+            <!-- Bulk Actions Bar -->
+            <div class="bg-gray-50 border-b border-border px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <input type="checkbox" id="select-all" class="w-4 h-4 text-cyan border-gray-300 rounded focus:ring-cyan">
+                    <label for="select-all" class="text-sm font-medium text-foreground">Select All</label>
+                    <span class="text-sm text-muted-foreground" id="selected-count">0 selected</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" name="action" value="approve" 
+                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        Approve Selected
+                    </button>
+                    <button type="submit" name="action" value="reject" 
+                            onclick="return confirm('Are you sure you want to reject and delete the selected reviews? This action cannot be undone.');"
+                            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        Reject Selected
+                    </button>
+                </div>
+            </div>
+
+            {% if page_obj %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" class="w-4 h-4 text-cyan border-gray-300 rounded focus:ring-cyan">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for review in page_obj %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" name="review_ids" value="{{ review.id }}" 
+                                       class="review-checkbox w-4 h-4 text-cyan border-gray-300 rounded focus:ring-cyan">
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div>
+                                        <a href="{% url 'storefront:product_detail' review.product.sku %}" 
+                                           class="text-sm font-medium text-cyan hover:underline" target="_blank">
+                                            {{ review.product.name }}
+                                        </a>
+                                        <p class="text-xs text-muted-foreground">SKU: {{ review.product.sku }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-foreground">
+                                    <p class="font-medium">{{ review.customer.user.username }}</p>
+                                    <p class="text-xs text-muted-foreground">{{ review.customer.user.email }}</p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-1">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                                        {% else %}
+                                            <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ml-1 text-sm font-medium text-foreground">{{ review.rating }}/5</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-foreground max-w-md">
+                                    {% if review.title %}
+                                    <p class="font-semibold mb-1">{{ review.title }}</p>
+                                    {% endif %}
+                                    {% if review.comment %}
+                                    <p class="text-muted-foreground line-clamp-2">{{ review.comment }}</p>
+                                    {% else %}
+                                    <span class="text-muted-foreground italic">No comment</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if review.is_approved %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                                        <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                        Approved
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+                                        <i data-lucide="clock" class="w-3 h-3"></i>
+                                        Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                <div>{{ review.created_at|date:"M d, Y" }}</div>
+                                <div class="text-xs">{{ review.created_at|date:"g:i A" }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex items-center gap-2">
+                                    {% if not review.is_approved %}
+                                    <a href="{% url 'admin_panel:review_approve' review.id %}" 
+                                       class="text-green-600 hover:text-green-700 flex items-center gap-1"
+                                       onclick="return confirm('Approve this review?');">
+                                        <i data-lucide="check" class="w-4 h-4"></i>
+                                        Approve
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'admin_panel:review_reject' review.id %}" 
+                                       class="text-red-600 hover:text-red-700 flex items-center gap-1"
+                                       onclick="return confirm('Reject and delete this review? This action cannot be undone.');">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                        Reject
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="bg-gray-50 px-6 py-4 border-t border-border flex items-center justify-between">
+                <div class="text-sm text-muted-foreground">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} reviews
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       class="px-3 py-2 border border-border rounded-lg hover:bg-gray-100 text-sm font-medium text-foreground">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    <span class="px-3 py-2 text-sm font-medium text-foreground">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       class="px-3 py-2 border border-border rounded-lg hover:bg-gray-100 text-sm font-medium text-foreground">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <!-- Empty State -->
+            <div class="p-12 text-center">
+                <i data-lucide="message-square" class="w-16 h-16 text-muted-foreground mx-auto mb-4"></i>
+                <h3 class="text-lg font-medium text-foreground mb-2">No Reviews Found</h3>
+                <p class="text-sm text-muted-foreground">
+                    {% if status_filter == 'pending' %}
+                        No pending reviews to moderate.
+                    {% elif status_filter == 'approved' %}
+                        No approved reviews yet.
+                    {% else %}
+                        No reviews have been submitted yet.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script>
+    // Select all checkbox functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.review-checkbox');
+        const selectedCount = document.getElementById('selected-count');
+        
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.review-checkbox:checked').length;
+            selectedCount.textContent = count + ' selected';
+            selectAll.indeterminate = count > 0 && count < checkboxes.length;
+            selectAll.checked = count === checkboxes.length && checkboxes.length > 0;
+        }
+        
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+        
+        // Update count on load
+        updateSelectedCount();
+    });
+</script>
+{% endblock %}
+

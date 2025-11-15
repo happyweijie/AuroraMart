@@ -24,8 +24,8 @@
         
         <!-- Login Card -->
         <div class="bg-card rounded-lg shadow-xl p-8">
-            {% if messages %}
-                {% for message in messages %}
+            {% if login_messages %}
+                {% for message in login_messages %}
                     <div class="mb-4 p-3 rounded-lg {% if message.tags == 'error' %}bg-destructive/10 text-destructive{% else %}bg-accent text-accent-foreground{% endif %}">
                         <p class="text-sm">{{ message }}</p>
                     </div>

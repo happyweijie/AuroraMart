@@ -134,7 +134,26 @@
 
     <!-- Reviews Section -->
     <div class="border-t border-border pt-12">
-        <h2 class="text-2xl font-bold text-foreground mb-6">Customer Reviews</h2>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-foreground">Customer Reviews</h2>
+            {% if can_review %}
+                <a href="{% url 'storefront:review_create' product.sku %}" 
+                   class="px-4 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                    <i data-lucide="edit" class="w-4 h-4"></i>
+                    Write a Review
+                </a>
+            {% elif has_reviewed %}
+                <div class="text-sm text-muted-foreground flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                    You've already reviewed this product
+                </div>
+            {% elif user.is_authenticated and not has_purchased %}
+                <div class="text-sm text-muted-foreground flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    Purchase this product to review it
+                </div>
+            {% endif %}
+        </div>
         
         {% if reviews %}
             <div class="space-y-6">
