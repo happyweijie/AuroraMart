@@ -17,6 +17,7 @@
                 <div class="flex-1 max-w-2xl mx-8">
                     <form action="{% url 'storefront:products' %}" method="get" class="relative">
                         <input type="search" 
+                               autocomplete="off"
                                name="q"
                                value="{{ search_query|default:'' }}"
                                placeholder="Search products..." 
