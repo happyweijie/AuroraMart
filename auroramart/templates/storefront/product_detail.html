@@ -109,6 +109,29 @@
         </div>
     </div>
 
+    <!-- Products Related To This Item -->
+    {% if similar_items %}
+    <div class="border-t border-border pt-12">
+        <h2 class="text-2xl font-bold text-foreground mb-6">Products related to this item</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for prod in similar_items %}
+            <div class="bg-card border border-border rounded-lg p-4 flex flex-col">
+                <a href="{% url 'storefront:product_detail' prod.sku %}" class="mb-2">
+                    <div class="w-full h-32 bg-gray-100 rounded-md flex items-center justify-center">
+                        <i data-lucide="package" class="w-8 h-8 text-gray-400"></i>
+                    </div>
+                </a>
+                <a href="{% url 'storefront:product_detail' prod.sku %}" class="font-medium text-foreground mt-2 hover:text-cyan">{{ prod.name }}</a>
+                <p class="text-sm text-muted-foreground">SKU: {{ prod.sku }}</p>
+                <div class="mt-auto pt-3">
+                    <span class="font-semibold text-foreground">${{ prod.price }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Reviews Section -->
     <div class="border-t border-border pt-12">
         <h2 class="text-2xl font-bold text-foreground mb-6">Customer Reviews</h2>

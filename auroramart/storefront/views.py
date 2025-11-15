@@ -7,7 +7,7 @@ from django.db import transaction
 from decimal import Decimal
 from .models import Product, Category, Cart, CartItem, Order, OrderItem
 from .forms import CheckoutForm
-from mlservices.get_recommendations import get_recommendations
+from mlservices.get_recommendations import get_product_recommendations
 
 # Create your views here.
 def index(request):
@@ -206,7 +206,7 @@ def product_detail(request, sku):
         sku=sku,
         is_active=True,
         archived=False
-    )
+    ) 
     
     # Get approved reviews for this product
     reviews = product.reviews.filter(is_approved=True).order_by('-created_at')
@@ -214,8 +214,12 @@ def product_detail(request, sku):
     # Calculate review statistics
     total_reviews = reviews.count()
     
+    # use ml model to get similar items
+    similar_items = get_product_recommendations([product.sku], top_n=4) 
+
     return render(request, 'storefront/product_detail.html', {
         'product': product,
+        'similar_items': similar_items,
         'reviews': reviews,
         'total_reviews': total_reviews,
     })
@@ -315,13 +319,10 @@ def cart_view(request):
     using_db_cart = request.user.is_authenticated and hasattr(request.user, 'customer_profile')
 
     # recommendations based on cart items
-    recommendations = get_recommendations(
-        items=[item.product.sku for item in cart_items], 
-        metric='lift',
-        top_n=3)
-    print(recommendations)
-
-    frequently_bought_together = Product.objects.filter(sku__in=recommendations, is_active=True, archived=False)
+    frequently_bought_together = get_product_recommendations(
+        product_skus=[item.product.sku if hasattr(item, 'product') else item['product'].sku for item in cart_items], 
+        top_n=3
+    )
     
     return render(request, 'storefront/cart.html', {
         'cart_items': cart_items,
