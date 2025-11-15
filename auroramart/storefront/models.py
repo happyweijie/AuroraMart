@@ -23,7 +23,15 @@ class Category(models.Model):
 
 	def __str__(self):
 		return self.name
-
+	
+	def get_all_products(self):
+		subcat_ids = self.children.values_list("id", flat=True)
+		return Product.objects.filter(
+			models.Q(category=self) | models.Q(category__in=subcat_ids),
+			stock__gte=0,
+			is_active=True,
+			archived=False
+		)
 
 class Product(models.Model):
 	"""Backs US001-US004 and ADM001-ADM004 with catalogue, pricing, rating, and inventory data."""

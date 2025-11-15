@@ -137,13 +137,9 @@ def category(request, slug):
     
     # Get category object
     category_obj = Category.objects.get(slug=slug)
-    
-    # Base queryset
-    products = category_obj.products.filter(
-        stock__gte=0,
-        is_active=True,
-        archived=False
-    )
+
+    # Get all products in this category and its subcategories
+    products = category_obj.get_all_products()
     
     # Apply search filter if query exists
     if search_query:
