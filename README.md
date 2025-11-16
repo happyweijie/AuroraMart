@@ -9,8 +9,7 @@ It was developed as part of the IS2108 (Full-stack Software Engineering for AI S
 
 AuroraMart aims to validate a core business hypothesis:
 
-> **Win the first session. Keep the second.**  
-> Deliver hyper-relevant products within 90 seconds and encourage return visits within 14–21 days.
+> Deliver hyper-relevant product recommendations within 90 seconds and encourage return visits within 14–21 days.
 
 To achieve this, the application integrates:
 
@@ -66,5 +65,72 @@ To achieve this, the application integrates:
 **Frontend:**  
 - HTML, CSS, JavaScript  
 - Django templates  
+
+---
+
+## 🔧 Setup & Installation
+
+### Prerequisites
+- Python 3.8+
+- pip
+- Git
+
+### Step 1: Clone & Install Dependencies
+```bash
+git clone https://github.com/happyweijie/AuroraMart.git
+cd AuroraMart/auroramart
+pip install -r ../requirements.txt
+```
+
+### Step 2: Download & Install ML Models
+1. **Download** `mlmodels.zip` from the shared resource [link](https://drive.google.com/drive/folders/1Z4bYzfEztsYPZP7CKW4WAy6kSoJ37Dab?usp=sharing).
+2. **Extract** the zip file.
+3. **Copy** the extracted folder into the `admin_panel` app directory:
+   ```bash
+   # Copy mlmodels folder to admin_panel/
+   cp -r path/to/mlmodels admin_panel/
+   ```
+   Your structure should look like:
+   ```
+   admin_panel/
+   ├── mlmodels/
+   │   ├── b2c_customers_100.joblib
+   │   ├── b2c_products_500_transactions_50k.joblib
+   ├── models.py
+   ├── views.py
+   └── ...
+   ```
+
+### Step 3: Load Database & Sample Data
+1. **Run migrations** to set up the database schema:
+   ```bash
+   python manage.py migrate
+   ```
+
+2. **Download** `data.json` from the shared resource [link](https://drive.google.com/drive/folders/1Z4bYzfEztsYPZP7CKW4WAy6kSoJ37Dab?usp=sharing).
+
+3. **Load** the sample data (including 500 products, categories, and transactions):
+   ```bash
+   python manage.py loaddata data.json
+   ```
+
+### Step 4: Create a Superuser (Optional)
+If you need to create your own admin account:
+```bash
+python manage.py createsuperuser
+```
+
+**Or use the pre-loaded admin credentials:**
+- **Username:** `admin`
+- **Password:** `P@55W0RD`
+
+### Step 5: Run the Development Server
+```bash
+python manage.py runserver
+```
+
+Access the application:
+- **Storefront:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Admin Panel:** [http://127.0.0.1:8000/panel/login](http://127.0.0.1:8000/panel/login)
 
 ---
