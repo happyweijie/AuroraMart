@@ -112,7 +112,10 @@
                     <!-- Subtotal -->
                     <div class="mt-3 pt-3 border-t border-border">
                         <p class="text-sm text-muted-foreground">
-                            Subtotal: <span class="font-semibold text-foreground">${{ item.subtotal }}</span>
+                            Subtotal: 
+                            <span class="font-semibold text-foreground">
+                                ${{ item.subtotal|floatformat:2 }}
+                            </span>
                         </p>
                     </div>
                 </div>
