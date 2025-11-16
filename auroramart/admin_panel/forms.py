@@ -147,9 +147,8 @@ class CustomerForm(forms.ModelForm):
     
     class Meta:
         model = Customer
-        # Preferred category is ML-driven; admins shouldn't edit it directly here.
         fields = ['age', 'household_size', 'has_children', 'monthly_income_sgd',
-                  'gender', 'employment_status', 'occupation', 'education']
+                  'gender', 'employment_status', 'occupation', 'education', 'preferred_category']
         widgets = {
             'age': forms.NumberInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent',
@@ -178,6 +177,9 @@ class CustomerForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent'
             }),
             'education': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent'
+            }),
+            'preferred_category': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:border-transparent'
             }),
         }

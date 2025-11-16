@@ -317,11 +317,10 @@ def category(request, slug):
     
     if recommendation_placement and recommendation_placement.strategy == 'association_rules':
         # Get ML recommendations based on category products
-        # page_obj.object_list may be a QuerySet or a list (after annotation),
-        # so avoid using values_list directly.
+        # page_obj.object_list may be a list after promotion annotation, so avoid values_list
         if hasattr(page_obj, 'object_list'):
-            category_products_sample = list(page_obj.object_list)[:5]
-            category_product_skus = [p.sku for p in category_products_sample]
+            first_products = list(page_obj.object_list)[:5]
+            category_product_skus = [p.sku for p in first_products]
         else:
             category_product_skus = []
         if category_product_skus:
@@ -460,25 +459,46 @@ def get_cart_items(request):
         # Use database cart for authenticated users
         cart, created = Cart.objects.get_or_create(customer=request.user.customer_profile)
         cart_items = cart.items.select_related('product').all()
+
+        # Annotate products in the cart with any active promotions
+        products = [item.product for item in cart_items]
+        annotate_products_with_promotions(products)
+
         for item in cart_items:
-            item.subtotal = item.product.price * item.quantity
+            # Use discounted price if available, otherwise regular price
+            effective_price = getattr(item.product, 'discounted_price', None) or item.product.price
+            item.unit_price = effective_price
+            item.original_price = item.product.price
+            item.subtotal = effective_price * item.quantity
             total += item.subtotal
     else:
         # Use session cart for guest users
         session_cart = request.session.get('cart', {})
+        session_items = []
+
         for sku, quantity in session_cart.items():
             try:
                 product = Product.objects.get(sku=sku, is_active=True, archived=False)
                 if product.stock >= quantity:
-                    subtotal = product.price * quantity
-                    cart_items.append({
-                        'product': product,
-                        'quantity': quantity,
-                        'subtotal': subtotal
-                    })
-                    total += subtotal
+                    session_items.append((product, quantity))
             except Product.DoesNotExist:
                 pass
+
+        # Annotate all session-cart products with promotions in one go
+        products = [p for (p, _) in session_items]
+        annotate_products_with_promotions(products)
+
+        for product, quantity in session_items:
+            effective_price = getattr(product, 'discounted_price', None) or product.price
+            subtotal = effective_price * quantity
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'unit_price': effective_price,
+                'original_price': product.price,
+                'subtotal': subtotal,
+            })
+            total += subtotal
     
     return cart_items, total
 
@@ -1035,26 +1055,21 @@ def chat_list(request):
         .prefetch_related('messages')
         .order_by('-updated_at')
     )
-
-    # Unread count: number of admin messages sent *after* the customer's last message
-    # This avoids needing extra DB fields and makes the "new" badge meaningful.
+    
+    # Track how many NEW admin messages have arrived since the customer's last message
+    # This avoids a forever-increasing counter without adding new DB fields.
     for session in chat_sessions:
-        customer_last_msg = (
-            session.messages.filter(sender='customer')
-            .order_by('-created_at')
-            .first()
-        )
-
         admin_messages = session.messages.filter(sender='admin')
-
-        if customer_last_msg:
-            admin_messages = admin_messages.filter(created_at__gt=customer_last_msg.created_at)
-
-        # If the chat is closed, we don't show any "new" badge.
-        if session.status == 'closed':
-            session.unread_count = 0
+        last_customer_msg = session.messages.filter(sender='customer').order_by('-created_at').first()
+        
+        if last_customer_msg:
+            # Only count admin messages sent after the customer's last reply
+            unread_admin_messages = admin_messages.filter(created_at__gt=last_customer_msg.created_at)
         else:
-            session.unread_count = admin_messages.count()
+            # If the customer has never replied, treat all admin messages as "new"
+            unread_admin_messages = admin_messages
+        
+        session.unread_count = unread_admin_messages.count()
     
     return render(request, 'storefront/chat_list.html', {
         'chat_sessions': chat_sessions,

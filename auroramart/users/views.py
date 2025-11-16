@@ -1,53 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
-from django.contrib.auth.decorators import login_required
-
 from .models import User, Customer
 from .forms import CustomerRegistrationForm, CustomerLoginForm, PasswordChangeForm
-from storefront.models import Cart, CartItem, Product
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 from mlservices.predict_preferred_category import get_preferred_category
-
-
-def _merge_session_cart_into_user_cart(request, user):
-    """
-    When a guest logs in or registers, merge any session-based cart items
-    into the persistent cart for that customer, then clear the session cart.
-    """
-    # Only proceed if user has a customer profile and there is a session cart
-    if not hasattr(user, 'customer_profile'):
-        return
-
-    session_cart = request.session.get('cart')
-    if not session_cart:
-        return
-
-    customer = user.customer_profile
-    cart, _ = Cart.objects.get_or_create(customer=customer)
-
-    for sku, quantity in session_cart.items():
-        try:
-            product = Product.objects.get(sku=sku, is_active=True, archived=False)
-        except Product.DoesNotExist:
-            continue
-
-        quantity = int(quantity)
-        if quantity < 1:
-            continue
-
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-        new_quantity = cart_item.quantity + quantity if not created else quantity
-
-        # Respect stock limits
-        if product.stock >= new_quantity:
-            cart_item.quantity = new_quantity
-            cart_item.save()
-
-    # Clear the session cart after merging
-    if 'cart' in request.session:
-        del request.session['cart']
-        request.session.modified = True
-
 
 # Create your views here.
 def user_login(request):
@@ -62,8 +19,6 @@ def user_login(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                # Merge any guest cart into the user's persistent cart
-                _merge_session_cart_into_user_cart(request, user)
                 messages.success(request, f'Welcome back, {user.first_name}!')
                 next_url = request.GET.get('next', 'storefront:home')
                 return redirect(next_url)
@@ -103,8 +58,6 @@ def register(request):
             customer.save()
             
             login(request, user)
-            # Merge any guest cart into the new user's persistent cart
-            _merge_session_cart_into_user_cart(request, user)
             messages.success(request, 'Account created successfully! Welcome to AuroraMart.')
             return redirect('storefront:home')
     else:

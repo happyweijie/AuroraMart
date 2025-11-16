@@ -37,7 +37,20 @@
                             </h3>
                             <p class="text-sm text-muted-foreground">SKU: {{ item.product.sku }}</p>
                         </div>
-                        <p class="text-lg font-bold text-cyan">${{ item.product.price }}</p>
+                        <div class="text-right">
+                            {% if item.product.discounted_price %}
+                                <p class="text-sm text-muted-foreground line-through">
+                                    ${{ item.product.price|floatformat:2 }}
+                                </p>
+                                <p class="text-lg font-bold text-cyan">
+                                    ${{ item.unit_price|floatformat:2 }}
+                                </p>
+                            {% else %}
+                                <p class="text-lg font-bold text-foreground">
+                                    ${{ item.unit_price|default:item.product.price|floatformat:2 }}
+                                </p>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <!-- Quantity Controls and Remove Button -->
@@ -122,7 +135,18 @@
                         <p class="text-sm text-muted-foreground">SKU: {{ prod.sku }}</p>
 
                         <div class="mt-auto flex items-center justify-between pt-3">
-                            <span class="font-semibold text-foreground">${{ prod.price }}</span>
+                            {% if prod.discounted_price %}
+                                <span class="text-sm text-muted-foreground line-through">
+                                    ${{ prod.price|floatformat:2 }}
+                                </span>
+                                <span class="font-semibold text-foreground ml-2">
+                                    ${{ prod.discounted_price|floatformat:2 }}
+                                </span>
+                            {% else %}
+                                <span class="font-semibold text-foreground">
+                                    ${{ prod.price|floatformat:2 }}
+                                </span>
+                            {% endif %}
                             <form method="post" action="{% url 'storefront:add_to_cart' prod.sku %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="sku" value="{{ prod.sku }}">
@@ -153,7 +177,9 @@
                 <div class="space-y-3 mb-6">
                     <div class="flex justify-between text-sm">
                         <span class="text-muted-foreground">Subtotal</span>
-                        <span class="font-medium text-foreground">${{ total }}</span>
+                        <span class="font-medium text-foreground">
+                            ${{ total|floatformat:2 }}
+                        </span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-muted-foreground">Shipping</span>
@@ -168,7 +194,9 @@
                 <div class="border-t border-border pt-4 mb-6">
                     <div class="flex justify-between">
                         <span class="text-lg font-semibold text-foreground">Total</span>
-                        <span class="text-2xl font-bold text-cyan">${{ total }}</span>
+                        <span class="text-2xl font-bold text-cyan">
+                            ${{ total|floatformat:2 }}
+                        </span>
                     </div>
                 </div>
 

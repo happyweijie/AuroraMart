@@ -67,7 +67,9 @@
 
                 <!-- Price -->
                 <div class="mb-3">
-                    <span class="text-xl font-bold text-cyan">${{ item.product.price|floatformat:2 }}</span>
+                    <span class="text-xl font-bold text-cyan">
+                        ${{ item.product.price|floatformat:2 }}
+                    </span>
                     <p class="text-xs text-muted-foreground mt-1">Added {{ item.added_at|date:"M d, Y" }}</p>
                 </div>
 

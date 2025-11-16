@@ -102,11 +102,17 @@
                     <div class="mb-3">
                         {% if product.active_promotion and product.discounted_price %}
                             <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-bold text-cyan">${{ product.discounted_price|floatformat:2 }}</span>
-                                <span class="text-lg font-semibold text-gray-400 line-through">${{ product.price|floatformat:2 }}</span>
+                                <span class="text-2xl font-bold text-cyan">
+                                    ${{ product.discounted_price|floatformat:2 }}
+                                </span>
+                                <span class="text-lg font-semibold text-gray-400 line-through">
+                                    ${{ product.price|floatformat:2 }}
+                                </span>
                             </div>
                         {% else %}
-                            <span class="text-2xl font-bold text-cyan">${{ product.price|floatformat:2 }}</span>
+                            <span class="text-2xl font-bold text-cyan">
+                                ${{ product.price|floatformat:2 }}
+                            </span>
                         {% endif %}
                     </div>
                     
@@ -226,11 +232,17 @@
                     <div class="mb-3">
                         {% if product.active_promotion and product.discounted_price %}
                             <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-bold text-cyan">${{ product.discounted_price|floatformat:2 }}</span>
-                                <span class="text-lg font-semibold text-gray-400 line-through">${{ product.price|floatformat:2 }}</span>
+                                <span class="text-2xl font-bold text-cyan">
+                                    ${{ product.discounted_price|floatformat:2 }}
+                                </span>
+                                <span class="text-lg font-semibold text-gray-400 line-through">
+                                    ${{ product.price|floatformat:2 }}
+                                </span>
                             </div>
                         {% else %}
-                            <span class="text-2xl font-bold text-cyan">${{ product.price|floatformat:2 }}</span>
+                            <span class="text-2xl font-bold text-cyan">
+                                ${{ product.price|floatformat:2 }}
+                            </span>
                         {% endif %}
                     </div>
                     
@@ -423,11 +435,17 @@
                     <div class="mb-3">
                         {% if product.active_promotion and product.discounted_price %}
                             <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-bold text-cyan">${{ product.discounted_price|floatformat:2 }}</span>
-                                <span class="text-lg font-semibold text-gray-400 line-through">${{ product.price|floatformat:2 }}</span>
+                                <span class="text-2xl font-bold text-cyan">
+                                    ${{ product.discounted_price|floatformat:2 }}
+                                </span>
+                                <span class="text-lg font-semibold text-gray-400 line-through">
+                                    ${{ product.price|floatformat:2 }}
+                                </span>
                             </div>
                         {% else %}
-                            <span class="text-2xl font-bold text-cyan">${{ product.price|floatformat:2 }}</span>
+                            <span class="text-2xl font-bold text-cyan">
+                                ${{ product.price|floatformat:2 }}
+                            </span>
                         {% endif %}
                     </div>
                     
@@ -591,11 +609,17 @@
                 <div class="mb-3">
                     {% if product.active_promotion and product.discounted_price %}
                         <div class="flex items-baseline gap-2">
-                            <span class="text-2xl font-bold text-cyan">${{ product.discounted_price|floatformat:2 }}</span>
-                            <span class="text-lg font-semibold text-gray-400 line-through">${{ product.price|floatformat:2 }}</span>
+                            <span class="text-2xl font-bold text-cyan">
+                                ${{ product.discounted_price|floatformat:2 }}
+                            </span>
+                            <span class="text-lg font-semibold text-gray-400 line-through">
+                                ${{ product.price|floatformat:2 }}
+                            </span>
                         </div>
                     {% else %}
-                        <span class="text-2xl font-bold text-cyan">${{ product.price|floatformat:2 }}</span>
+                        <span class="text-2xl font-bold text-cyan">
+                            ${{ product.price|floatformat:2 }}
+                        </span>
                     {% endif %}
                     </div>
                 {% if product.review_count > 0 %}
