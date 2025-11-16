@@ -1,7 +1,7 @@
 # AuroraMart – Personalised E-commerce Platform
 
 AuroraMart is a full-stack B2C e-commerce web application built with **Python**, **Django**, and integrated **machine learning models**.  
-It was developed as part of the IS2108 (Full-stack Software Engineering for AI Solutions I) pair project.
+It was developed as part of the [IS2108 Full-stack Software Engineering for AI Solutions I](https://nusmods.com/courses/IS2108/full-stack-software-engineering-for-ai-solutions-i) pair project.
 
 ---
 
@@ -9,7 +9,7 @@ It was developed as part of the IS2108 (Full-stack Software Engineering for AI S
 
 AuroraMart aims to validate a core business hypothesis:
 
-> Deliver hyper-relevant product recommendations within 90 seconds and encourage return visits within 14–21 days.
+> Deliver hyper-relevant product recommendations and encourage return visits within 14–21 days.
 
 To achieve this, the application integrates:
 
