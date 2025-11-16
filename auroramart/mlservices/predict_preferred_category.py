@@ -4,15 +4,24 @@ from pathlib import Path
 from django.apps import apps
 from users.models import Customer
 from storefront.models import Category
+from threading import Lock
 
 APP_PATH = Path(apps.get_app_config('admin_panel').path)
+_MODEL_PATH = APP_PATH / 'mlmodels' / 'b2c_customers_100.joblib'
+
+_CATEGORY_PREDICTION = None
+_load_lock = Lock()
 
 def load_category_prediction_model():
-    model_path = APP_PATH / 'mlmodels' / 'b2c_customers_100.joblib'
-
-    return joblib.load(model_path) 
-
-_CATEGORY_PREDICTION = load_category_prediction_model() # load once at startup
+    """Load model lazily on first access."""
+    global _CATEGORY_PREDICTION
+    
+    if _CATEGORY_PREDICTION is None:
+        with _load_lock:  # Prevent double loading under concurrency
+            if _CATEGORY_PREDICTION is None:
+                _CATEGORY_PREDICTION = joblib.load(_MODEL_PATH)
+    
+    return _CATEGORY_PREDICTION
 
 def predict_preferred_category(customer_data: dict):
 
@@ -45,6 +54,10 @@ def predict_preferred_category(customer_data: dict):
 
             df[col] = customer_encoded[col]
     
+    # load model lazily
+    if not _CATEGORY_PREDICTION:
+        load_category_prediction_model()
+
     # Now input_encoded can be used for prediction
     prediction = _CATEGORY_PREDICTION.predict(df)    
 
