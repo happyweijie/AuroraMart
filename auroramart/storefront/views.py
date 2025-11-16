@@ -1,5 +1,4 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.contrib import messages
@@ -318,9 +317,7 @@ def category(request, slug):
     
     if recommendation_placement and recommendation_placement.strategy == 'association_rules':
         # Get ML recommendations based on category products
-        category_product_skus = [
-            p.sku for p in page_obj.object_list[:5]
-            ] if hasattr(page_obj, 'object_list') else []
+        category_product_skus = list(page_obj.object_list[:5].values_list('sku', flat=True)) if hasattr(page_obj, 'object_list') else []
         if category_product_skus:
             category_recommendations = list(get_product_recommendations(category_product_skus, top_n=6))
             category_recommendations = annotate_products_with_promotions(category_recommendations)
@@ -941,6 +938,9 @@ def add_to_watchlist(request, sku):
     next_url = request.GET.get('next', 'storefront:product_detail')
     if next_url.startswith('http'):
         return redirect(next_url)
+    elif ':' in next_url:
+        from django.urls import reverse
+        return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:product_detail', sku=sku)
 
@@ -967,6 +967,9 @@ def remove_from_watchlist(request, sku):
     next_url = request.GET.get('next', 'storefront:watchlist')
     if next_url.startswith('http'):
         return redirect(next_url)
+    elif ':' in next_url:
+        from django.urls import reverse
+        return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:watchlist')
 
@@ -1019,12 +1022,33 @@ def chat_list(request):
         return redirect('storefront:home')
     
     customer = request.user.customer_profile
-    chat_sessions = ChatSession.objects.filter(customer=customer).select_related('order').prefetch_related('messages').order_by('-updated_at')
-    
-    # For now, just track admin messages count (can be enhanced with read/unread tracking later)
+    chat_sessions = (
+        ChatSession.objects
+        .filter(customer=customer)
+        .select_related('order')
+        .prefetch_related('messages')
+        .order_by('-updated_at')
+    )
+
+    # Unread count: number of admin messages sent *after* the customer's last message
+    # This avoids needing extra DB fields and makes the "new" badge meaningful.
     for session in chat_sessions:
+        customer_last_msg = (
+            session.messages.filter(sender='customer')
+            .order_by('-created_at')
+            .first()
+        )
+
         admin_messages = session.messages.filter(sender='admin')
-        session.unread_count = admin_messages.count() if admin_messages.exists() else 0
+
+        if customer_last_msg:
+            admin_messages = admin_messages.filter(created_at__gt=customer_last_msg.created_at)
+
+        # If the chat is closed, we don't show any "new" badge.
+        if session.status == 'closed':
+            session.unread_count = 0
+        else:
+            session.unread_count = admin_messages.count()
     
     return render(request, 'storefront/chat_list.html', {
         'chat_sessions': chat_sessions,
