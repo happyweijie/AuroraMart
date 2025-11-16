@@ -192,11 +192,12 @@ def product_create(request):
         form = ProductForm(request.POST)
         if form.is_valid():
             product = form.save()
-            messages.success(request, f'Product "{product.name}" created successfully!')
-            return redirect('admin_panel:product_list')
+            messages.success(request, f'Product \"{product.name}\" created successfully!')
+            # Redirect to the product list view (named \"products\" in urls.py)
+            return redirect('admin_panel:products')
     else:
         form = ProductForm()
-    
+
     return render(request, 'admin_panel/product_form.html', {
         'form': form,
         'form_title': 'Create New Product',
@@ -214,7 +215,8 @@ def product_update(request, sku):
         if form.is_valid():
             product = form.save()
             messages.success(request, f'Product "{product.name}" updated successfully!')
-            return redirect('admin_panel:product_list')
+            # Redirect back to product list (URL name is 'products')
+            return redirect('admin_panel:products')
     else:
         form = ProductForm(instance=product)
     
@@ -237,8 +239,9 @@ def product_delete(request, sku):
         product.archived = True
         product.is_active = False
         product.save()
-        messages.success(request, f'Product "{product_name}" has been archived.')
-        return redirect('admin_panel:product_list')
+        messages.success(request, f'Product \"{product_name}\" has been archived.')
+        # Redirect back to product list (URL name is 'products')
+        return redirect('admin_panel:products')
     
     return render(request, 'admin_panel/product_confirm_delete.html', {
         'product': product
@@ -249,7 +252,8 @@ def product_delete(request, sku):
 @staff_required
 def product_management(request):
     """Redirect to product list"""
-    return redirect('admin_panel:product_list')
+    # Use the current URL name for product listing (named 'products' in urls.py)
+    return redirect('admin_panel:products')
 
 
 # ============ CATEGORY MANAGEMENT ============
@@ -274,7 +278,7 @@ def category_create(request):
         if form.is_valid():
             category = form.save()
             messages.success(request, f'Category "{category.name}" created successfully!')
-            return redirect('admin_panel:category_list')
+            return redirect('admin_panel:categories')
     else:
         form = CategoryForm()
     
@@ -295,7 +299,7 @@ def category_update(request, category_id):
         if form.is_valid():
             category = form.save()
             messages.success(request, f'Category "{category.name}" updated successfully!')
-            return redirect('admin_panel:category_list')
+            return redirect('admin_panel:categories')
     else:
         form = CategoryForm(instance=category)
     
@@ -311,7 +315,7 @@ def category_update(request, category_id):
 @staff_required
 def category_management(request):
     """Redirect to category list"""
-    return redirect('admin_panel:category_list')
+    return redirect('admin_panel:categories')
 
 
 # ============ INVENTORY MANAGEMENT ============
@@ -431,7 +435,8 @@ def customer_update(request, customer_id):
         if form.is_valid():
             customer = form.save()
             messages.success(request, f'Customer "{customer.user.username}" updated successfully!')
-            return redirect('admin_panel:customer_list')
+            # Redirect back to customer list (URL name is 'customers')
+            return redirect('admin_panel:customers')
     else:
         form = CustomerForm(instance=customer)
     
@@ -447,7 +452,8 @@ def customer_update(request, customer_id):
 @staff_required
 def customer_records(request):
     """Redirect to customer list"""
-    return redirect('admin_panel:customer_list')
+    # Use the current URL name for customer listing (named 'customers' in urls.py)
+    return redirect('admin_panel:customers')
 
 
 # ============ ORDER MANAGEMENT ============
@@ -520,7 +526,8 @@ def admin_order_detail(request, order_id):
 @staff_required
 def order_management(request):
     """Redirect to order list"""
-    return redirect('admin_panel:admin_order_list')
+    # Use the current URL name for order listing (named 'orders' in urls.py)
+    return redirect('admin_panel:orders')
 
 
 def _recalculate_product_rating(product):

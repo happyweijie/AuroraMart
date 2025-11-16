@@ -157,18 +157,6 @@
     
     <!-- Main Content -->
     <main class="flex-1 bg-background">
-        <!-- Messages -->
-        {% if messages %}
-        <div class="space-y-2 mt-4">
-            {% for message in messages %}
-            <div class="max-w-8xl mx-auto px-4 sm:px-6">
-                <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-lg p-4">
-                    <p class="text-sm {% if message.tags == 'error' %}text-red-600{% else %}text-green-600{% endif %}">{{ message }}</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {% block page_content %}
             {% endblock %}
