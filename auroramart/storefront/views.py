@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.contrib import messages
@@ -940,9 +941,6 @@ def add_to_watchlist(request, sku):
     next_url = request.GET.get('next', 'storefront:product_detail')
     if next_url.startswith('http'):
         return redirect(next_url)
-    elif ':' in next_url:
-        from django.urls import reverse
-        return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:product_detail', sku=sku)
 
