@@ -29,15 +29,9 @@
             <div>
                 <h1 class="text-3xl font-bold text-foreground mb-2">{{ product.name }}</h1>
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-1">
-                        {% for i in "12345" %}
-                            {% if forloop.counter <= product.rating|floatformat:0 %}
-                                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-yellow-400"></i>
-                            {% else %}
-                                <i data-lucide="star" class="w-5 h-5 text-gray-300"></i>
-                            {% endif %}
-                        {% endfor %}
-                        <span class="text-lg font-semibold text-foreground ml-2">{{ product.rating }}</span>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-yellow-400"></i>
+                        <span class="text-lg font-semibold text-foreground">{{ product.rating|floatformat:1 }}</span>
                     </div>
                     <span class="text-sm text-muted-foreground">({{ total_reviews }} reviews)</span>
                 </div>
