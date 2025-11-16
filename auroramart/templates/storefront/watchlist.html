@@ -43,16 +43,10 @@
                 
                 <p class="text-xs text-muted-foreground mb-2">{{ item.product.category.name }}</p>
                 
-                <!-- Rating -->
-                <div class="flex items-center gap-1 mb-3">
-                    {% for i in "12345" %}
-                        {% if forloop.counter <= item.product.rating|floatformat:0 %}
-                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        {% else %}
-                            <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
-                        {% endif %}
-                    {% endfor %}
-                    <span class="text-sm text-muted-foreground ml-1">({{ item.product.rating|floatformat:1 }})</span>
+                <!-- Rating: single star + numeric value -->
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                    <span class="text-sm text-muted-foreground">{{ item.product.rating|floatformat:1 }}</span>
                 </div>
 
                 <!-- Description -->
@@ -96,7 +90,7 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
+        </a>
         {% endfor %}
     </div>
 
