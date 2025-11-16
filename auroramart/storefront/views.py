@@ -960,13 +960,23 @@ def add_to_watchlist(request, sku):
         WatchlistItem.objects.create(watchlist=watchlist, product=product)
         messages.success(request, f'{product.name} has been added to your watchlist.')
     
-    # Redirect back to product page or watchlist
+    # Redirect back to the appropriate page
     next_url = request.GET.get('next', 'storefront:product_detail')
     if next_url.startswith('http'):
         return redirect(next_url)
     elif ':' in next_url:
         from django.urls import reverse
-        return redirect(reverse(next_url, args=[sku]))
+        # Some named URLs (home, products, flash_sale_products, watchlist) take no SKU argument
+        no_arg_views = {
+            'storefront:home',
+            'storefront:products',
+            'storefront:flash_sale_products',
+            'storefront:watchlist',
+        }
+        if next_url in no_arg_views:
+            return redirect(reverse(next_url))
+        else:
+            return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:product_detail', sku=sku)
 
@@ -995,7 +1005,16 @@ def remove_from_watchlist(request, sku):
         return redirect(next_url)
     elif ':' in next_url:
         from django.urls import reverse
-        return redirect(reverse(next_url, args=[sku]))
+        no_arg_views = {
+            'storefront:home',
+            'storefront:products',
+            'storefront:flash_sale_products',
+            'storefront:watchlist',
+        }
+        if next_url in no_arg_views:
+            return redirect(reverse(next_url))
+        else:
+            return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:watchlist')
 
