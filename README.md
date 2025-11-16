@@ -130,7 +130,7 @@ python manage.py runserver
 ```
 
 Access the application:
-- **Storefront:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **Admin Panel:** [http://127.0.0.1:8000/panel/login](http://127.0.0.1:8000/panel/login)
+- **Storefront:** [http://localhost:8000/](http://localhost:8000/)
+- **Admin Panel:** [http://localhost/panel/login](http://localhost:8000/panel/login)
 
 ---
