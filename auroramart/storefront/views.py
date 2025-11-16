@@ -317,7 +317,13 @@ def category(request, slug):
     
     if recommendation_placement and recommendation_placement.strategy == 'association_rules':
         # Get ML recommendations based on category products
-        category_product_skus = list(page_obj.object_list[:5].values_list('sku', flat=True)) if hasattr(page_obj, 'object_list') else []
+        # page_obj.object_list may be a QuerySet or a list (after annotation),
+        # so avoid using values_list directly.
+        if hasattr(page_obj, 'object_list'):
+            category_products_sample = list(page_obj.object_list)[:5]
+            category_product_skus = [p.sku for p in category_products_sample]
+        else:
+            category_product_skus = []
         if category_product_skus:
             category_recommendations = list(get_product_recommendations(category_product_skus, top_n=6))
             category_recommendations = annotate_products_with_promotions(category_recommendations)
