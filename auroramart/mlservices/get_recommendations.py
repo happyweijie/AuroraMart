@@ -3,27 +3,38 @@ import logging
 from pathlib import Path
 from django.apps import apps
 from storefront.models import Product
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
 _PRODUCT_RECOMMENDATIONS = None
+_load_lock = Lock()
 
 def load_recommendations_rules():
-    """Load association rules model lazily (only when needed)"""
+    """Load association rules model lazily (only when needed)."""
     global _PRODUCT_RECOMMENDATIONS
-    if _PRODUCT_RECOMMENDATIONS is None:
-        try:
-            # Get app path dynamically to avoid import-time issues
-            app_path = Path(apps.get_app_config('admin_panel').path)
-            model_path = app_path / 'mlmodels' / 'b2c_products_500_transactions_50k.joblib'
-            
-            if not model_path.exists():
-                logger.warning(f"ML model file not found at: {model_path}")
-                return None
-            _PRODUCT_RECOMMENDATIONS = joblib.load(model_path)
-        except Exception as e:
-            logger.error(f"Error loading ML model: {e}")
-            return None
+
+    # First check (fast path)
+    if _PRODUCT_RECOMMENDATIONS is not None:
+        return _PRODUCT_RECOMMENDATIONS
+
+    try:
+        with _load_lock:
+            # Second check (ensures only one thread loads)
+            if _PRODUCT_RECOMMENDATIONS is None:
+                app_path = Path(apps.get_app_config('admin_panel').path)
+                model_path = app_path / 'mlmodels' / 'b2c_products_500_transactions_50k.joblib'
+
+                if not model_path.exists():
+                    logger.warning(f"ML model file not found at: {model_path}")
+                    return None
+
+                _PRODUCT_RECOMMENDATIONS = joblib.load(model_path)
+
+    except Exception as e:
+        logger.error(f"Error loading ML model: {e}")
+        return None
+
     return _PRODUCT_RECOMMENDATIONS
 
 def get_recommendations(loaded_rules, items, metric='confidence', top_n=5):
