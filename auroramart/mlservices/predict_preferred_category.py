@@ -6,9 +6,6 @@ from users.models import Customer
 from storefront.models import Category
 from threading import Lock
 
-APP_PATH = Path(apps.get_app_config('admin_panel').path)
-_MODEL_PATH = APP_PATH / 'mlmodels' / 'b2c_customers_100.joblib'
-
 _CATEGORY_PREDICTION = None
 _load_lock = Lock()
 
@@ -19,7 +16,10 @@ def load_category_prediction_model():
     if _CATEGORY_PREDICTION is None:
         with _load_lock:  # Prevent double loading under concurrency
             if _CATEGORY_PREDICTION is None:
-                _CATEGORY_PREDICTION = joblib.load(_MODEL_PATH)
+                app_path = Path(apps.get_app_config('admin_panel').path)
+                model_path = app_path / 'mlmodels' / 'b2c_customers_100.joblib'
+                
+                _CATEGORY_PREDICTION = joblib.load(model_path)
     
     return _CATEGORY_PREDICTION
 
