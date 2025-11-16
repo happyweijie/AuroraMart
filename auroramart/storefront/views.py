@@ -317,7 +317,9 @@ def category(request, slug):
     
     if recommendation_placement and recommendation_placement.strategy == 'association_rules':
         # Get ML recommendations based on category products
-        category_product_skus = list(page_obj.object_list[:5].values_list('sku', flat=True)) if hasattr(page_obj, 'object_list') else []
+        category_product_skus = [
+            p.sku for p in page_obj.object_list[:5]
+            ] if hasattr(page_obj, 'object_list') else []
         if category_product_skus:
             category_recommendations = list(get_product_recommendations(category_product_skus, top_n=6))
             category_recommendations = annotate_products_with_promotions(category_recommendations)
