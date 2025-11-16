@@ -2,6 +2,8 @@ import pandas as pd
 import joblib
 from pathlib import Path
 from django.apps import apps
+from users.models import Customer
+from storefront.models import Category
 
 APP_PATH = Path(apps.get_app_config('admin_panel').path)
 
@@ -12,7 +14,7 @@ def load_category_prediction_model():
 
 _CATEGORY_PREDICTION = load_category_prediction_model() # load once at startup
 
-def predict_preferred_category(customer_data):
+def predict_preferred_category(customer_data: dict):
 
     columns = {
         'age':'int64', 'household_size':'int64', 'has_children':'int64', 'monthly_income_sgd':'float64',
@@ -46,5 +48,24 @@ def predict_preferred_category(customer_data):
     # Now input_encoded can be used for prediction
     prediction = _CATEGORY_PREDICTION.predict(df)    
 
-    return prediction
+    return prediction[0]
+
+def get_preferred_category(customer: Customer):
+    customer_data = {
+                'age': customer.age,
+                'household_size': customer.household_size,
+                'has_children': int(customer.has_children),
+                'monthly_income_sgd': float(customer.monthly_income_sgd),
+                'gender': customer.gender,
+                'employment_status': customer.employment_status,
+                'occupation': customer.occupation,
+                'education': customer.education
+            }
     
+    preferred_category = predict_preferred_category(customer_data)
+    try:
+        preferred_category_fk = Category.objects.get(name=preferred_category)
+    except Category.DoesNotExist:
+        preferred_category_fk = None 
+
+    return preferred_category, preferred_category_fk

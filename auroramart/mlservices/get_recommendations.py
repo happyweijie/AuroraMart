@@ -26,25 +26,20 @@ def load_recommendations_rules():
             return None
     return _PRODUCT_RECOMMENDATIONS
 
-def get_recommendations(items, metric='confidence', top_n=5, loaded_rules=None):
-    """Get product recommendations based on association rules"""
-    if not items or not loaded_rules:
-        return []
-    
+def get_recommendations(loaded_rules, items, metric='confidence', top_n=5):
+
     recommendations = set()
 
     for item in items:
-        try:
-            # Find rules where the item is in the antecedents
-            matched_rules = loaded_rules[loaded_rules['antecedents'].apply(lambda x: item in x)]
-            # Sort by the specified metric and get the top N
-            top_rules = matched_rules.sort_values(by=metric, ascending=False).head(top_n)
 
-            for _, row in top_rules.iterrows():
-                recommendations.update(row['consequents'])
-        except Exception as e:
-            logger.warning(f"Error processing recommendations for item {item}: {e}")
-            continue
+        # Find rules where the item is in the antecedents
+        matched_rules = loaded_rules[loaded_rules['antecedents'].apply(lambda x: item in x)]
+        # Sort by the specified metric and get the top N
+        top_rules = matched_rules.sort_values(by=metric, ascending=False).head(top_n)
+
+        for _, row in top_rules.iterrows():
+
+            recommendations.update(row['consequents'])
 
     # Remove items that are already in the input list
     recommendations.difference_update(items)
@@ -69,7 +64,7 @@ def get_product_recommendations(product_skus, top_n=5):
         logger.warning("ML model not available, using category-based fallback")
         return _get_category_based_recommendations(product_skus, top_n)
     
-    recommendations = get_recommendations(items=product_skus, metric='lift', top_n=top_n, loaded_rules=loaded_rules)
+    recommendations = get_recommendations(loaded_rules=loaded_rules, items=product_skus, metric='lift', top_n=top_n)
 
     if recommendations:
         return Product.objects.filter(sku__in=recommendations, is_active=True, archived=False)
