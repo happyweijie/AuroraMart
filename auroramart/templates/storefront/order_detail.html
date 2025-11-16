@@ -4,10 +4,16 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Back Button -->
-    <div class="mb-6">
-        <a href="{% url 'storefront:order_list' %}" 
+    <!-- Back Buttons -->
+    <div class="mb-6 flex items-center gap-4">
+        <a href="{% url 'storefront:home' %}" 
            class="inline-flex items-center gap-2 text-cyan hover:text-cyan/80 font-medium">
+            <i data-lucide="home" class="w-4 h-4"></i>
+            Back to Home
+        </a>
+
+        <a href="{% url 'storefront:order_list' %}" 
+           class="inline-flex items-center gap-2 text-muted-foreground hover:text-muted-foreground/80 font-medium">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             Back to Orders
         </a>

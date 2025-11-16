@@ -967,9 +967,6 @@ def remove_from_watchlist(request, sku):
     next_url = request.GET.get('next', 'storefront:watchlist')
     if next_url.startswith('http'):
         return redirect(next_url)
-    elif ':' in next_url:
-        from django.urls import reverse
-        return redirect(reverse(next_url, args=[sku]))
     else:
         return redirect('storefront:watchlist')
 

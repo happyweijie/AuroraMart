@@ -4,6 +4,14 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{% url 'storefront:home' %}" class="inline-flex items-center gap-2 text-cyan hover:text-cyan/80 font-medium">
+            <i data-lucide="home" class="w-4 h-4"></i>
+            Back to Home
+        </a>
+    </div>
+
     <!-- Page Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-foreground">Order History</h1>
