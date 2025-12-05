@@ -25,8 +25,10 @@ To achieve this, the application integrates:
 - Manage the product catalogue (500 SKUs)  
 - Update stock and inventory  
 - Maintain customer profiles
-  
-![AuroraMart admin panel](auroramart/static/readme/admin_panel.png)
+
+ <p align="center">
+   <img src="auroramart/static/readme/admin_panel.png">
+ </p>
 
 ### 🛒 Customer Storefront
 - Browse curated categories & subcategories  
@@ -37,7 +39,9 @@ To achieve this, the application integrates:
   - **Complete the Set** (cart suggestions)  
   - **Next Best Action** (category-page nudges)
  
-![AuroraMart storefront](auroramart/static/readme/home_page.png)
+ <p align="center">
+   <img src="auroramart/static/readme/home_page.png">
+ </p>
 
 ### 🤖 AI Integration
 
@@ -46,25 +50,31 @@ To achieve this, the application integrates:
 - Output: predicted preferred product category  
 - Home Page contains personalised recommendations based on the customer's preferred product category
 
-<figure style="margin:0;text-align:center;">
-  <img src="auroramart/static/readme/category_based_recommendations.png" alt="Category-based home page recommendations" style="width:100%;max-width:720px;height:auto;border:1px solid #ddd;" />
-  <figcaption style="text-align:center;font-size:0.95rem;margin-top:6px;">Home page: category-based personalised recommendations</figcaption>
-</figure>
+<table>
+  <tr>
+    <td align="center">
+      <strong>Home page: Category Based Recommendations</strong><br />
+      <img src="auroramart/static/readme/category_based_recommendations.png" />
+    </td>
+  </tr>
+</table>
 
 #### Association Rules
 - Derived from 50,000 historical transactions  
 - Provides context-aware cross-sell and upsell suggestions  
 
-<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
-  <figure style="margin:0;flex:1 1 320px;max-width:48%;">
-    <img src="auroramart/static/readme/cart_recommendations.png" alt="Cart recommendations" style="width:100%;height:auto;max-height:360px;border:1px solid #ddd;" />
-    <figcaption style="text-align:center;font-size:0.95rem;margin-top:6px;">Cart page recommendations (Complete the Set)</figcaption>
-  </figure>
-  <figure style="margin:0;flex:1 1 320px;max-width:48%;">
-    <img src="auroramart/static/readme/product_page_recommendations.png" alt="Product page recommendations" style="width:100%;height:auto;max-height:360px;border:1px solid #ddd;" />
-    <figcaption style="text-align:center;font-size:0.95rem;margin-top:6px;">Product page recommendations (Frequently Bought Together)</figcaption>
-  </figure>
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <strong>Cart page recommendations (Complete the Set)</strong><br />
+      <img src="auroramart/static/readme/cart_recommendations.png" />
+    </td>
+    <td align="center">
+      <strong>Product page recommendations (Frequently Bought Together)</strong><br />
+      <img src="auroramart/static/readme/product_page_recommendations.png" />
+    </td>
+  </tr>
+</table>
 
 ---
 
