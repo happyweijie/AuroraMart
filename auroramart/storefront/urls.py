@@ -41,4 +41,7 @@ urlpatterns = [
     
     # Flash Sale Products
     path('flash-sale/', views.flash_sale_products, name='flash_sale_products'),
+
+    # Chatbot Integration
+    path('aurora/', views.aurora_chatbot_view, name='aurora_chatbot'),
 ]

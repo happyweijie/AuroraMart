@@ -218,3 +218,41 @@ class ChatMessage(models.Model):
 
 	def __str__(self):
 		return f"{self.sender} message"
+
+# AI Chatbot
+class AiChatSession(models.Model):
+    # Links to the user
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='ai_chat_sessions')
+    title = models.CharField(max_length=255, blank=True, default="New Aurora Chat") 
+    
+    # Metadata for sorting and display
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Status for clearing/archiving
+    is_active = models.BooleanField(default=True) 
+    
+    class Meta:
+        # Show newest sessions first
+        ordering = ['-updated_at']
+
+class AiChatMessage(models.Model):
+    session = models.ForeignKey(
+        AiChatSession,
+        on_delete=models.CASCADE,
+        related_name='messages' # Use this to fetch the messages for a session
+    )
+    
+    SENDER_CHOICES = [
+        ('user', 'User'),
+        ('assistant', 'Aurora Assistant'),
+    ]
+    sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
+    content = models.TextField()
+    token_usage = models.IntegerField(default=0)
+    model_used = models.CharField(max_length=50, blank=True, null=True)
+    
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['timestamp']

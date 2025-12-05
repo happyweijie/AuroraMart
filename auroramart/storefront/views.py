@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
@@ -7,7 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import date, timedelta
 from decimal import Decimal
-from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review, Watchlist, WatchlistItem, Promotion, ChatSession, ChatMessage
+from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review, Watchlist, WatchlistItem, Promotion, ChatSession, ChatMessage, AiChatSession, AiChatMessage
 from users.models import Customer
 from .forms import CheckoutForm, ReviewForm, ChatForm, ChatMessageForm
 from mlservices.get_recommendations import get_product_recommendations
@@ -1206,3 +1207,33 @@ def flash_sale_products(request):
     }
     
     return render(request, 'storefront/flash_sale_products.html', context)
+
+# Aurora Chatbot Integration
+@login_required
+def aurora_chatbot_view(request):
+    """Render the Aurora chatbot interface"""
+    customer = request.user.customer_profile
+
+    session = AiChatSession.objects.filter(customer=customer, is_active=True).first()
+    if not session:
+        session = AiChatSession.objects.create(customer=customer) 
+
+    return render(request, 'storefront/aurora.html', {
+        "session": session,
+    })
+
+@login_required
+def ask_aurora(request):
+    """Handle user queries to the Aurora chatbot"""
+    if request.method == 'POST':
+        user_query = request.POST.get('query', '').strip()
+        if user_query:
+            # Here we would integrate with the Aurora chatbot backend
+            # For demonstration, we'll return a placeholder response
+            bot_response = f"Aurora says: I'm here to help you with '{user_query}'!"
+            
+            return JsonResponse({'response': bot_response})
+        else:   
+            return JsonResponse({'error': 'Query cannot be empty.'}, status=400)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
