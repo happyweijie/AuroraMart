@@ -89,7 +89,8 @@
                 ></textarea>
                 <button 
                     type="submit" 
-                    class="bg-cyan text-white px-6 py-3 rounded-lg font-semibold hover:bg-cyan/90 transition-colors self-end"
+                    id="send-button"
+                    class="bg-cyan text-white px-6 py-3 rounded-lg font-semibold hover:bg-cyan/90 transition-colors self-end disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Send
                 </button>
@@ -114,6 +115,49 @@ function removeEmptyState() {
         
         // Ensure standard height/flow classes are present if removed earlier
         // e.g., chatMessages.classList.add('space-y-4'); 
+    }
+}
+
+// Function to create loading indicator
+function createLoadingIndicator() {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.classList.add('flex', 'justify-start');
+    loadingDiv.id = 'loading-indicator';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('max-w-[80%]', 'bg-gray-100', 'text-foreground', 'p-4', 'rounded-lg', 'shadow-sm');
+
+    const container = document.createElement('div');
+    container.classList.add('flex', 'items-center', 'gap-2');
+
+    const dotsContainer = document.createElement('div');
+    dotsContainer.classList.add('flex', 'items-center', 'gap-1');
+
+    // Create three animated dots
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('w-2', 'h-2', 'bg-gray-400', 'rounded-full', 'animate-bounce');
+        dot.style.animationDelay = `${i * 0.15}s`;
+        dotsContainer.appendChild(dot);
+    }
+
+    const typingText = document.createElement('span');
+    typingText.classList.add('text-sm', 'text-gray-500');
+    typingText.textContent = 'Aurora is typing...';
+
+    container.appendChild(dotsContainer);
+    container.appendChild(typingText);
+    contentDiv.appendChild(container);
+    loadingDiv.appendChild(contentDiv);
+
+    return loadingDiv;
+}
+
+// Function to remove loading indicator
+function removeLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.remove();
     }
 }
 
@@ -144,6 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
     const chatMessagesContainer = document.getElementById('chat-messages');
 
     // Function to scroll to the bottom of the chat container
@@ -191,6 +236,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!userQuery) return;
 
+        // Disable the send button and input during request
+        sendButton.disabled = true;
+        messageInput.disabled = true;
+
         // Immediately render the user's message for a responsive feel
         const tempUserMessage = {
             sender: 'user',
@@ -202,6 +251,11 @@ document.addEventListener('DOMContentLoaded', function() {
         messageInput.value = ''; // Clear input
         scrollToBottom();
 
+        // Show loading indicator
+        const loadingIndicator = createLoadingIndicator();
+        chatMessagesContainer.appendChild(loadingIndicator);
+        scrollToBottom();
+
         fetch(chatForm.action, {
             method: 'POST',
             body: formData,
@@ -211,12 +265,24 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            // Remove loading indicator
+            removeLoadingIndicator();
+            
             // The user message is already rendered, so we just render the bot's response
             appendMessage(data.bot_message);
             scrollToBottom();
+
+            // Re-enable the send button and input
+            sendButton.disabled = false;
+            messageInput.disabled = false;
+            messageInput.focus();
         })
         .catch(error => {
             console.error('Error:', error);
+            
+            // Remove loading indicator
+            removeLoadingIndicator();
+            
             // Optionally, display an error message in the chat
             const errorMessage = {
                 sender: 'bot',
@@ -225,6 +291,10 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             appendMessage(errorMessage);
             scrollToBottom();
+
+            // Re-enable the send button and input
+            sendButton.disabled = false;
+            messageInput.disabled = false;
         });
     });
 
