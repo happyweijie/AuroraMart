@@ -1212,11 +1212,14 @@ def flash_sale_products(request):
 @login_required
 def aurora_chatbot_view(request):
     """Render the Aurora chatbot interface"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to use Aurora.')
+        return redirect('storefront:home')
+
     customer = request.user.customer_profile
 
-    session = AiChatSession.objects.filter(customer=customer, is_active=True).first()
-    if not session:
-        session = AiChatSession.objects.create(customer=customer) 
+    # Use get_or_create to simplify finding or creating an active session
+    session, created = AiChatSession.objects.get_or_create(customer=customer, is_active=True)
 
     return render(request, 'storefront/aurora.html', {
         "session": session,
@@ -1225,15 +1228,41 @@ def aurora_chatbot_view(request):
 @login_required
 def ask_aurora(request):
     """Handle user queries to the Aurora chatbot"""
-    if request.method == 'POST':
-        user_query = request.POST.get('query', '').strip()
-        if user_query:
-            # Here we would integrate with the Aurora chatbot backend
-            # For demonstration, we'll return a placeholder response
-            bot_response = f"Aurora says: I'm here to help you with '{user_query}'!"
-            
-            return JsonResponse({'response': bot_response})
-        else:   
-            return JsonResponse({'error': 'Query cannot be empty.'}, status=400)
-    else:
+    if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+    session_id = request.POST.get('session_id')
+    user_query = request.POST.get('message_content', '').strip()
+
+    if not session_id or not user_query:
+        return JsonResponse({'error': 'Session ID and message are required.'}, status=400)
+
+    try:
+        session = AiChatSession.objects.get(pk=session_id, customer=request.user.customer_profile)
+    except AiChatSession.DoesNotExist:
+        return JsonResponse({'error': 'Chat session not found.'}, status=404)
+
+    # 1. Save the user's message
+    user_message = AiChatMessage.objects.create(
+        session=session,
+        sender='user',
+        content=user_query
+    )
+
+    # 2. Simulate a call to the Gemini/Aurora backend
+    # In a real application, you would call your ML service here.
+    # For now, we'll just provide a placeholder response.
+    bot_response_content = f"Thank you for asking about '{user_query}'. I am still in training, but I am learning to answer your questions about products, orders, and more!"
+
+    # 3. Save the bot's response
+    bot_message = AiChatMessage.objects.create(
+        session=session,
+        sender='bot',
+        content=bot_response_content
+    )
+
+    # 4. Return both messages to be rendered by the frontend
+    return JsonResponse({
+        'user_message': user_message.to_dict(),
+        'bot_message': bot_message.to_dict(),
+    })

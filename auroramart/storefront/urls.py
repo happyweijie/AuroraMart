@@ -44,4 +44,5 @@ urlpatterns = [
 
     # Chatbot Integration
     path('aurora/', views.aurora_chatbot_view, name='aurora_chatbot'),
+    path('aurora/ask/', views.ask_aurora, name='ask_aurora'),
 ]
