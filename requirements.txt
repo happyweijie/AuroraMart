@@ -16,3 +16,6 @@ whitenoise>=6.5.0
 
 # Chatbot
 google-genai
+
+# Other dependencies
+python-dotenv>=1.0.0

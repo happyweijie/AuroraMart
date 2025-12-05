@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from datetime import date, timedelta
@@ -1270,7 +1271,7 @@ def ask_aurora(request):
     )
 
     # 2.  Call the API (using the SDK/HTTP)
-    client = genai.Client()
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
     response = client.models.generate_content(
         model='gemini-2.5-flash',
         contents=gemini_context
