@@ -3,18 +3,38 @@
 {% block title %}Support Messages - AuroraMart{% endblock %}
 
 {% block page_content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- Quick help banner -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+    <div class="bg-cyan/10 border border-cyan/20 rounded-lg p-3 flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-foreground">Need quick help? Ask Aurora instantly.</p>
+            <p class="text-xs text-muted-foreground">Get an instant answer from our chat assistant.</p>
+        </div>
+        <div>
+            <!-- Change colour of Ask Aurora button to be more distinct from the Start New Chat button-->
+            <a href="#" class="inline-flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors whitespace-nowrap">
+                <i data-lucide="bot" class="w-4 h-4"></i>
+                Ask Aurora
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
     <!-- Page Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-foreground mb-2">Support Messages</h1>
             <p class="text-muted-foreground">View and manage your support conversations</p>
         </div>
-        <a href="{% url 'storefront:chat_create' %}" 
-           class="px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
-            <i data-lucide="message-square-plus" class="w-5 h-5"></i>
-            New Message
-        </a>
+        <div class="flex items-center gap-4">
+            <a href="{% url 'storefront:chat_create' %}" 
+               class="px-6 py-3 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2">
+                <i data-lucide="message-square-plus" class="w-5 h-5"></i>
+                Start New Chat
+            </a>
+        </div>
     </div>
 
     {% if chat_sessions %}
