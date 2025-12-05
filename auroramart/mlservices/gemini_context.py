@@ -3,7 +3,7 @@ from .gemini_helpers.extract_primary_intent import extract_primary_intent
 from .gemini_helpers.extract_order_id import extract_order_id
 from .gemini_helpers.extract_product_names import extract_product_name
 
-system_persona = "You are Aurora, a friendly and concise e-commerce shopping assistant. Your goal is to answer questions only about products, shipping, and existing orders. If the question is outside these topics, politely redirect the user back to chat with human staff."
+system_persona = "You are Aurora, a friendly and concise e-commerce shopping assistant. Your goal is to answer questions only about products, shipping, and existing orders. If the question is outside these topics, politely redirect the user back to chat with human staff through the Support Chat Page."
 
 shipping_policy = "A general shipping policy is that standard delivery takes **5 to 7 business days** across the region. Use this fact when answering general delivery questions."
 

@@ -1263,7 +1263,6 @@ def ask_aurora(request):
 
     # 1. Save the user's message
     gemini_context = create_gemini_context(session, user_query)
-    print(gemini_context)
     user_message = AiChatMessage.objects.create(
         session=session,
         sender='user',
@@ -1281,7 +1280,6 @@ def ask_aurora(request):
         sender='bot',
         content=response.text,
     )
-    print(response.text)
 
     # 3. Return both messages to be rendered by the frontend
     return JsonResponse({
