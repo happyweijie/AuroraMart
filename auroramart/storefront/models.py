@@ -223,8 +223,7 @@ class ChatMessage(models.Model):
 class AiChatSession(models.Model):
     # Links to the user
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='ai_chat_sessions')
-    title = models.CharField(max_length=255, blank=True, default="New Aurora Chat") 
-    
+ 
     # Metadata for sorting and display
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -249,7 +248,7 @@ class AiChatMessage(models.Model):
     ]
 
     sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
-    content = models.TextField()
+    content = models.TextField(blank=True, null=True)
     token_usage = models.IntegerField(default=0)
     model_used = models.CharField(max_length=50, blank=True, null=True)
 
@@ -271,4 +270,3 @@ class AiChatMessage(models.Model):
 
     class Meta:
         ordering = ['timestamp']
-		

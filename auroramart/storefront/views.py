@@ -12,7 +12,9 @@ from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review,
 from users.models import Customer
 from .forms import CheckoutForm, ReviewForm, ChatForm, ChatMessageForm
 from mlservices.get_recommendations import get_product_recommendations
+from mlservices.gemini_context import create_gemini_context
 from admin_panel.models import RecommendationPlacement
+from google import genai
 
 # Helper function to annotate products with promotion data
 def annotate_products_with_promotions(products):
@@ -1260,25 +1262,28 @@ def ask_aurora(request):
         return JsonResponse({'error': 'Chat session not found.'}, status=404)
 
     # 1. Save the user's message
+    gemini_context = create_gemini_context(session, user_query)
+    print(gemini_context)
     user_message = AiChatMessage.objects.create(
         session=session,
         sender='user',
         content=user_query
     )
 
-    # 2. Simulate a call to the Gemini/Aurora backend
-    # In a real application, you would call your ML service here.
-    # For now, we'll just provide a placeholder response.
-    bot_response_content = f"Thank you for asking about '{user_query}'. I am still in training, but I am learning to answer your questions about products, orders, and more!"
-
-    # 3. Save the bot's response
-    bot_message = AiChatMessage.objects.create(
+    # 2.  Call the API (using the SDK/HTTP)
+    client = genai.Client()
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=gemini_context
+    )
+    bot_message = AiChatMessage.objects.create( # save response
         session=session,
         sender='bot',
-        content=bot_response_content
+        content=response.text,
     )
+    print(response.text)
 
-    # 4. Return both messages to be rendered by the frontend
+    # 3. Return both messages to be rendered by the frontend
     return JsonResponse({
         'user_message': user_message.serialize(),
         'bot_message': bot_message.serialize(),
