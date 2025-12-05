@@ -240,19 +240,35 @@ class AiChatMessage(models.Model):
     session = models.ForeignKey(
         AiChatSession,
         on_delete=models.CASCADE,
-        related_name='messages' # Use this to fetch the messages for a session
+        related_name='messages'  # Use this to fetch the messages for a session
     )
-    
+
     SENDER_CHOICES = [
         ('user', 'User'),
         ('assistant', 'Aurora Assistant'),
     ]
+
     sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
     content = models.TextField()
     token_usage = models.IntegerField(default=0)
     model_used = models.CharField(max_length=50, blank=True, null=True)
-    
+
     timestamp = models.DateTimeField(auto_now_add=True)
-    
+
+    def __str__(self):
+        return f"{self.sender} message in session {self.session.id}"
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'session_id': self.session.id,
+            'sender': self.sender,
+            'content': self.content,
+            'token_usage': self.token_usage,
+            'model_used': self.model_used,
+            'timestamp': self.timestamp.isoformat(),
+        }
+
     class Meta:
         ordering = ['timestamp']
+		

@@ -1226,6 +1226,23 @@ def aurora_chatbot_view(request):
     })
 
 @login_required
+def clear_chat(request, session_id):
+    """Clear all messages in a chat session"""
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'You must be a customer to clear chat messages.')
+        return redirect('storefront:home')
+
+    customer = request.user.customer_profile
+    session = get_object_or_404(AiChatSession, pk=session_id, customer=customer)
+
+    if request.method == 'POST':
+        session.is_active = False
+        session.save()
+        return redirect('storefront:aurora_chatbot')
+
+    return redirect('storefront:aurora_chatbot')
+
+@login_required
 def ask_aurora(request):
     """Handle user queries to the Aurora chatbot"""
     if request.method != 'POST':
@@ -1263,6 +1280,6 @@ def ask_aurora(request):
 
     # 4. Return both messages to be rendered by the frontend
     return JsonResponse({
-        'user_message': user_message.to_dict(),
-        'bot_message': bot_message.to_dict(),
+        'user_message': user_message.serialize(),
+        'bot_message': bot_message.serialize(),
     })

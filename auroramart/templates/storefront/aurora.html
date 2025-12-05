@@ -2,13 +2,234 @@
 {% load static %}
 
 {% block page_content %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Page Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-foreground mb-2">Ask Aurora</h1>
-            <p class="text-muted-foreground">Your personal shopping assistant</p>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8 flex justify-between items-end">
+            
+            <div>
+                <h1 class="text-3xl font-bold text-foreground mb-2">Ask Aurora</h1>
+                <p class="text-muted-foreground">Your personal shopping assistant</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                
+                <a href="{% url 'storefront:chat_list' %}" 
+                class="px-4 py-2 bg-cyan text-white font-medium rounded-lg hover:bg-cyan/90 transition-colors flex items-center gap-2 text-sm">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    Support Chat
+                </a>
+
+                <a href="#" id="clear-chat-trigger" 
+                class="px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 text-sm">
+                    <i data-lucide="brush-cleaning" class="w-4 h-4"></i>
+                    Clear Chat
+                </a>
+
+                <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+                            <h3 class="text-lg font-bold text-red-700 mb-4 flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i> 
+                                Confirm Deletion
+                            </h3>
+                            <p class="text-gray-700 mb-6">
+                                Are you absolutely sure you want to clear this chat history? This action is permanent.
+                            </p>
+                            
+                            <form action="{% url 'storefront:clear_chat' session.id %}" method="post" class="flex justify-end gap-3">
+                                {% csrf_token %}
+                                
+                                <button type="button" id="modal-cancel-btn" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                                    Cancel
+                                </button>
+                                
+                                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                                    Yes, Clear History
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                
+            </div>
         </div>
     </div>
 
-    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div class="bg-card border border-border rounded-lg p-6 shadow-sm flex flex-col h-[70vh]">
+            
+            <!-- Chat Messages Container -->
+            <div id="chat-messages" class="space-y-4 mb-6 overflow-y-auto flex-grow h-full 
+                {% if not session.messages.all %}
+                flex flex-col justify-center items-center
+                {% endif %}
+            ">
+                {% for message in session.messages.all %}
+                    <div class="flex {% if message.sender == 'user' %}justify-end{% else %}justify-start{% endif %}">
+                        <div class="max-w-[80%] {% if message.sender == 'user' %}bg-cyan text-white{% else %}bg-gray-100 text-foreground{% endif %} p-4 rounded-lg shadow-sm">
+                            <p class="whitespace-pre-wrap">{{ message.content }}</p>
+                            <span class="text-xs text-muted-foreground mt-2 block text-right">{{ message.timestamp|date:"M d, Y g:i A" }}</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted-foreground text-center">No messages yet. Start the conversation by typing below.</p>
+                {% endfor %}
+            </div>
+            
+            <!-- Chat Form -->
+            <form id="chat-form" action="{% url 'storefront:ask_aurora' %}" method="post" class="flex flex-col gap-4 mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="session_id" value="{{ session.pk }}">
+                
+                <textarea
+                    name="message_content" 
+                    id="message-input"
+                    placeholder="Ask Aurora a question..."
+                    autocomplete="off"
+                    required
+                    rows="3"
+                    class="w-full border border-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-cyan focus:border-cyan"
+                ></textarea>
+                <button 
+                    type="submit" 
+                    class="bg-cyan text-white px-6 py-3 rounded-lg font-semibold hover:bg-cyan/90 transition-colors self-end"
+                >
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chatMessages = document.getElementById('chat-messages');
+
+// Function to remove empty state classes
+function removeEmptyState() {
+    // Check if the empty state text is still there (i.e., this is the first message)
+    const emptyMessage = chatMessages.querySelector('.text-muted-foreground.text-center');
+    if (emptyMessage) {
+        emptyMessage.remove(); // Remove the "No messages yet" text
+
+        // Remove the centering classes from the parent container
+        chatMessages.classList.remove('flex', 'flex-col', 'justify-center', 'items-center');
+        
+        // Ensure standard height/flow classes are present if removed earlier
+        // e.g., chatMessages.classList.add('space-y-4'); 
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+        const triggerBtn = document.getElementById('clear-chat-trigger');
+        const modal = document.getElementById('confirmation-modal');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        
+        // Function to open the modal
+        triggerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.style.display = 'flex'; // Change hidden to visible
+        });
+        
+        // Function to close the modal
+        cancelBtn.addEventListener('click', function() {
+            modal.style.display = 'none'; // Hide the modal
+        });
+
+        // Close modal if user clicks outside the content (optional)
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const chatMessagesContainer = document.getElementById('chat-messages');
+
+    // Function to scroll to the bottom of the chat container
+    function scrollToBottom() {
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+
+    // Function to create and append a message element
+    function appendMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('flex');
+        messageDiv.classList.add(message.sender === 'user' ? 'justify-end' : 'justify-start');
+
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('max-w-[80%]', 'p-4', 'rounded-lg', 'shadow-sm');
+        if (message.sender === 'user') {
+            contentDiv.classList.add('bg-cyan', 'text-white');
+        } else {
+            contentDiv.classList.add('bg-gray-100', 'text-foreground');
+        }
+
+        const p = document.createElement('p');
+        p.classList.add('whitespace-pre-wrap');
+        p.textContent = message.content;
+
+        const span = document.createElement('span');
+        span.classList.add('text-xs', 'text-muted-foreground', 'mt-2', 'block', 'text-right');
+        // Format the date nicely
+        const date = new Date(message.timestamp);
+        span.textContent = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
+        contentDiv.appendChild(p);
+        contentDiv.appendChild(span);
+        messageDiv.appendChild(contentDiv);
+
+        // The form is inside the container, so we insert the message before the form
+        chatMessagesContainer.appendChild(messageDiv);
+    }
+
+    chatForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default page reload
+
+        const formData = new FormData(chatForm);
+        const userQuery = formData.get('message_content').trim();
+
+        if (!userQuery) return;
+
+        // Immediately render the user's message for a responsive feel
+        const tempUserMessage = {
+            sender: 'user',
+            content: userQuery,
+            timestamp: new Date().toISOString()
+        };
+        removeEmptyState();
+        appendMessage(tempUserMessage);
+        messageInput.value = ''; // Clear input
+        scrollToBottom();
+
+        fetch(chatForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // The user message is already rendered, so we just render the bot's response
+            appendMessage(data.bot_message);
+            scrollToBottom();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Optionally, display an error message in the chat
+            const errorMessage = {
+                sender: 'bot',
+                content: 'Sorry, something went wrong. Please try again.',
+                timestamp: new Date().toISOString()
+            };
+            appendMessage(errorMessage);
+            scrollToBottom();
+        });
+    });
+
+    // Scroll to bottom on page load
+    scrollToBottom();
+});
+</script>
 {% endblock %}
