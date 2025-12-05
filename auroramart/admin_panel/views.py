@@ -14,7 +14,13 @@ from admin_panel.models import RecommendationPlacement, AnalyticsMetric, AuditLo
 from .decorators import staff_required
 from .forms import ProductForm, CategoryForm, BulkInventoryUpdateForm, CustomerForm, OrderStatusUpdateForm, PromotionForm, AdminUserForm, AdminUserCreateForm
 
-
+def index(request):
+    """Redirect to admin login or dashboard based on authentication"""
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect('admin_panel:dashboard')
+    else:
+        return redirect('admin_panel:admin_login')
+    
 def admin_login(request):
     """Admin login page"""
     # Redirect if already authenticated and is staff
