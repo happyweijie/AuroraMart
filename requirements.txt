@@ -13,3 +13,6 @@ graphviz>=0.20.0
 # Deployment/Production
 gunicorn>=21.0.0
 whitenoise>=6.5.0
+
+# Chatbot
+google-genai
