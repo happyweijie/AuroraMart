@@ -76,6 +76,21 @@ To achieve this, the application integrates:
   </tr>
 </table>
 
+#### Aurora Chatbot
+- Instant AI assistance for general queries related to orders, products, policies, and troubleshooting.
+- Retrieval-Augmented Generation (RAG) pipeline that retrieves relevant product, order, and FAQ context before generating an answer.
+- Session-based chat system that stores message history per customer for continuity.
+- Fallback to human support via the existing Support Messages system when issues require staff involvement.
+
+<table>
+  <tr>
+    <td align="center">
+      <strong>Aurora Chatbot</strong><br />
+      <img src="auroramart/static/readme/aurora_chatbot.png" />
+    </td>
+  </tr>
+</table>
+
 ---
 
 ## 📦 Tech Stack
@@ -89,6 +104,7 @@ To achieve this, the application integrates:
 - joblib  
 - scikit-learn  
 - Apriori/association rules (pre-computed)
+- Gemini
 
 **Frontend:**  
 - HTML, CSS, JavaScript  
@@ -110,7 +126,22 @@ cd AuroraMart/auroramart
 pip install -r ../requirements.txt
 ```
 
-### Step 2: Download & Install ML Models
+### Step 2: Create the .env File
+AuroraMart uses environment variables to store configuration values and sensitive keys.
+
+1. Create a ```.env``` file inside the project root (auroramart/):
+```
+cd auroramart
+touch .env
+```
+2. Add the required environment variables:
+```
+# Gemini API Key
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+3. Make sure your Django settings load this ```.env``` file (using ```dotenv``` as configured in the project).
+
+### Step 3: Download & Install ML Models
 1. **Download** `mlmodels.zip` from the shared resource [link](https://drive.google.com/drive/folders/1Z4bYzfEztsYPZP7CKW4WAy6kSoJ37Dab?usp=sharing).
 2. **Extract** the zip file.
 3. **Copy** the extracted folder into the `admin_panel` app directory:
@@ -129,7 +160,7 @@ pip install -r ../requirements.txt
    └── ...
    ```
 
-### Step 3: Load Database & Sample Data
+### Step 4: Load Database & Sample Data
 1. **Run migrations** to set up the database schema:
    ```bash
    python manage.py migrate
@@ -142,7 +173,7 @@ pip install -r ../requirements.txt
    python manage.py loaddata data.json
    ```
 
-### Step 4: Create a Superuser (Optional)
+### Step 5: Create a Superuser (Optional)
 If you need to create your own admin account:
 ```bash
 python manage.py createsuperuser
@@ -152,7 +183,7 @@ python manage.py createsuperuser
 - **Username:** `admin`
 - **Password:** `P@55W0RD`
 
-### Step 5: Run the Development Server
+### Step 6: Run the Development Server
 ```bash
 python manage.py runserver
 ```
