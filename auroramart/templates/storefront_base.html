@@ -56,6 +56,11 @@
                             {% endif %}
                         </a>
                         
+                        <!-- HelpBot -->
+                        <a href="#" class="p-2 hover:bg-gray-100 rounded-lg relative" title="Help Bot">
+                            <i data-lucide="bot" class="w-6 h-6 text-foreground"></i>
+                        </a>
+
                         <!-- User Menu -->
                         <div class="relative" x-data="{ open: false }" @click.away="open = false"> {# Added Alpine.js x-data and click.away #}
                             <button @click="open = !open" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan focus:ring-opacity-50">
@@ -96,6 +101,11 @@
                                 <a href="{% url 'storefront:chat_list' %}" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
                                     <i data-lucide="message-circle" class="inline-block w-4 h-4 mr-2 text-muted-foreground"></i>
                                     Support Chat
+                                </a>
+
+                                <a href="#" class="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
+                                    <i data-lucide="bot" class="inline-block w-4 h-4 mr-2 text-muted-foreground"></i>
+                                    Ask Aurora
                                 </a>
                                 
                                 {# Separator #}
