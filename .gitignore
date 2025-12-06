@@ -47,5 +47,5 @@ Thumbs.db
 # json
 *.json
 
-# env
+#.env
 .env
