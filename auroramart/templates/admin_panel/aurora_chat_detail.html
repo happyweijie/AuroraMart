@@ -1,4 +1,5 @@
 {% extends "admin_base.html" %}
+{% load markdown_extras %}
 
 {% block page_title %}AI Chat Session #{{ session.id }}{% endblock %}
 {% block page_description %}View AI chatbot conversation{% endblock %}
@@ -139,7 +140,7 @@
                         </span>
                         {% endif %}
                     </div>
-                    <div class="text-sm whitespace-pre-wrap">{{ msg.content }}</div>
+                    <div class="text-sm whitespace-pre-wrap">{{ msg.content|markdown_to_html|safe }}</div>
                     {% if msg.model_used and msg.sender == 'bot' %}
                     <div class="text-xs opacity-75 mt-2 pt-2 border-t border-white/20">
                         Model: {{ msg.model_used }}
