@@ -235,6 +235,9 @@ class AiChatSession(models.Model):
         # Show newest sessions first
         ordering = ['-updated_at']
 
+    def total_tokens(self):
+    	return self.messages.aggregate(total=models.Sum('token_usage'))['total'] or 0
+
 class AiChatMessage(models.Model):
     session = models.ForeignKey(
         AiChatSession,

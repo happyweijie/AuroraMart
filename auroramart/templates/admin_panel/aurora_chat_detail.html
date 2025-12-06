@@ -87,7 +87,7 @@
                 </div>
                 <div>
                     <p class="text-xs text-muted-foreground">Total Tokens Used</p>
-                    <p class="text-xl font-semibold text-foreground">{{ total_tokens|default:"0" }}</p>
+                    <p class="text-xl font-semibold text-foreground">{{ session.total_tokens|default:"0" }}</p>
                 </div>
             </div>
         </div>
@@ -100,11 +100,13 @@
                 <div>
                     <p class="text-xs text-muted-foreground">AI Model</p>
                     <p class="text-sm font-semibold text-foreground">
-                        {% if messages_list.first.model_used %}
-                            {{ messages_list.first.model_used }}
-                        {% else %}
-                            N/A
-                        {% endif %}
+                        {% with msg=session.messages.last %}
+                            {% if msg.model_used %}
+                                {{ msg.model_used }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        {% endwith %}
                     </p>
                 </div>
             </div>

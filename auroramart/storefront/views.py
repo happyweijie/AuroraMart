@@ -1280,10 +1280,16 @@ def ask_aurora(request):
         model='gemini-2.5-flash',
         contents=gemini_context
     )
+    token_usage = ( # billable token usage
+        response.usage_metadata.prompt_token_count +
+        response.usage_metadata.candidates_token_count
+    )
     bot_message = AiChatMessage.objects.create( # save response
         session=session,
         sender='bot',
         content=response.text,
+        token_usage=token_usage,
+        model_used=response.model_version
     )
 
     # 3. Return both messages to be rendered by the frontend
