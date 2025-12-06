@@ -14,9 +14,14 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Get Gemini API key from .env file
 load_dotenv()  # loads the .env file
-
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Timezone
+TIME_ZONE = "UTC"
+USE_TZ = True
+SG_TIME_ZONE = "Asia/Singapore"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

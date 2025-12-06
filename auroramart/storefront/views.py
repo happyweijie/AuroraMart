@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+import pytz
 from datetime import date, timedelta
 from decimal import Decimal
 from .models import Product, Category, Cart, CartItem, Order, OrderItem, Review, Watchlist, WatchlistItem, Promotion, ChatSession, ChatMessage, AiChatSession, AiChatMessage
@@ -1223,7 +1224,9 @@ def aurora_chatbot_view(request):
 
     # Use get_or_create to simplify finding or creating an active session
     session, created = AiChatSession.objects.get_or_create(customer=customer, is_active=True)
-
+    
+    # Set timezone
+    timezone.activate(pytz.timezone(settings.SG_TIME_ZONE))
     return render(request, 'storefront/aurora.html', {
         "session": session,
     })

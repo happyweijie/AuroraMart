@@ -1,4 +1,5 @@
 {% extends "storefront_base.html" %}
+{% load tz %}
 {% load static %}
 
 {% block page_content %}
@@ -65,7 +66,7 @@
                     <div class="flex {% if message.sender == 'user' %}justify-end{% else %}justify-start{% endif %}">
                         <div class="max-w-[80%] {% if message.sender == 'user' %}bg-cyan text-white{% else %}bg-gray-100 text-foreground{% endif %} p-4 rounded-lg shadow-sm">
                             <p class="whitespace-pre-wrap">{{ message.content }}</p>
-                            <span class="text-xs text-muted-foreground mt-2 block text-right">{{ message.timestamp|date:"M d, Y g:i A" }}</span>
+                            <span class="text-xs text-muted-foreground mt-2 block text-right">{{ message.timestamp|localtime|date:"M d, g:i A" }}</span>
                         </div>
                     </div>
                 {% empty %}
