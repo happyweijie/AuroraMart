@@ -86,7 +86,7 @@ To achieve this, the application integrates:
   <tr>
     <td align="center">
       <strong>Aurora Chatbot</strong><br />
-      <img src="auroramart/static/readme/aurora_chatbot.png" />
+      <img src="auroramart/static/readme/aurora_chatbot2.png" />
     </td>
   </tr>
 </table>
