@@ -6,11 +6,15 @@
         <h2 class="text-xl font-semibold text-foreground">AI Chatbot Sessions</h2>
         <p class="text-sm text-muted-foreground">Manage AI Chatbot Conversations</p>
     </div>
-    <a href="#" 
-       class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2">
-        <i data-lucide="trash-2" class="w-4 h-4"></i>
-        <span>Delete Inactive Sessions</span>
-    </a>
+    <form method="post" action="{% url 'admin_panel:delete_inactive_chats' %}">
+        {% csrf_token %}
+        <button
+            onclick="return confirm('Are you sure you want to delete all inactive session? This action cannot be undone.');"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Delete Inactive Sessions</span>
+        </button>
+    </form>
 </div>
 
 <!-- Sessions Table -->
@@ -66,7 +70,7 @@
                         {{ session.messages.count }} message{{ session.messages.count|pluralize }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="#" 
+                        <a href="{% url 'admin_panel:aurora_chat_detail' session.id %}" 
                            class="text-cyan hover:text-cyan/80 flex items-center gap-1">
                             <i data-lucide="bot" class="w-4 h-4"></i>
                             View Messages

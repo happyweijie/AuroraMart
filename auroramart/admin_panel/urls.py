@@ -38,5 +38,9 @@ urlpatterns = [
     path('admin-users/create/', views.admin_user_create, name='admin_user_create'),
     path('admin-users/<int:user_id>/edit/', views.admin_user_update, name='admin_user_update'),
     path('admin-users/<int:user_id>/delete/', views.admin_user_delete, name='admin_user_delete'),
-    path('aurora_logs', views.aurora_chatbot_logs, name='aurora_chatbot_logs')
+    path('aurora', views.aurora_chatbot_logs, name='aurora_chatbot_logs'),
+    path('aurora/chat/<int:session_id>', views.aurora_chat_detail, name='aurora_chat_detail'),
+    path('aurora/chat/<int:session_id>/inactive', views.make_chat_inactive, name='make_chat_inactive'),
+    path('aurora/chat/<int:session_id>/delete', views.delete_chat, name='delete_chat'),
+    path('aurora/chat/delete', views.delete_inactive_chats, name='delete_inactive_chats'),
 ]

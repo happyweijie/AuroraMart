@@ -1471,3 +1471,39 @@ def aurora_chatbot_logs(request):
     return render(request, "admin_panel/aurora_chatbot_logs.html", {
         "page_obj": page_obj,
     })
+
+@staff_required
+def aurora_chat_detail(request, session_id):
+    session = AiChatSession.objects.get(id=session_id)
+    
+    return render(request, "admin_panel/aurora_chat_detail.html", {
+        "session": session,
+    })
+
+@staff_required
+def make_chat_inactive(request, session_id):
+    if request.method == "POST":
+        session = AiChatSession.objects.get(id=session_id)
+        session.is_active = False
+        session.save()
+    
+        return redirect("admin_panel:aurora_chat_detail", session_id=session.id)
+
+    return redirect("admin_panel:aurora_chatbot_logs")
+
+@staff_required
+def delete_chat(request, session_id):
+    if request.method == "POST":
+        session = AiChatSession.objects.get(id=session_id)
+
+        if not session.is_active:
+            session.delete()
+
+    return redirect("admin_panel:aurora_chatbot_logs")
+
+@staff_required
+def delete_inactive_chats(request):
+    if request.method == "POST":
+        AiChatSession.objects.filter(is_active=False).delete()
+
+    return redirect("admin_panel:aurora_chatbot_logs")

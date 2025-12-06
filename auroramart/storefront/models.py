@@ -244,7 +244,7 @@ class AiChatMessage(models.Model):
 
     SENDER_CHOICES = [
         ('user', 'User'),
-        ('assistant', 'Aurora Assistant'),
+        ('bot', 'Aurora Assistant'),
     ]
 
     sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
