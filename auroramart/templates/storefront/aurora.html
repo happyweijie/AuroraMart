@@ -1,4 +1,5 @@
 {% extends "storefront_base.html" %}
+{% load markdown_extras %}
 {% load tz %}
 {% load static %}
 
@@ -65,7 +66,7 @@
                 {% for message in session.messages.all %}
                     <div class="flex {% if message.sender == 'user' %}justify-end{% else %}justify-start{% endif %}">
                         <div class="max-w-[80%] {% if message.sender == 'user' %}bg-cyan text-white{% else %}bg-gray-100 text-foreground{% endif %} p-4 rounded-lg shadow-sm">
-                            <p class="whitespace-pre-wrap">{{ message.content }}</p>
+                            <p class="whitespace-pre-wrap">{{ message.content|markdown_to_html|safe }}</p>
                             <span class="text-xs text-muted-foreground mt-2 block text-right">{{ message.timestamp|localtime|date:"M d, g:i A" }}</span>
                         </div>
                     </div>
@@ -98,6 +99,7 @@
             </form>
         </div>
     </div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -213,20 +215,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const p = document.createElement('p');
         p.classList.add('whitespace-pre-wrap');
-        p.textContent = message.content;
+
+        // convert Markdown to HTML
+        var converter = new showdown.Converter()
+        p.innerHTML = converter.makeHtml(message.content);
 
         const span = document.createElement('span');
         span.classList.add('text-xs', 'text-muted-foreground', 'mt-2', 'block', 'text-right');
-        // Format the date nicely
         const date = new Date(message.timestamp);
-        span.textContent = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+        span.textContent = date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
 
         contentDiv.appendChild(p);
         contentDiv.appendChild(span);
         messageDiv.appendChild(contentDiv);
 
-        // The form is inside the container, so we insert the message before the form
+        // Append message before the form (or at the end)
         chatMessagesContainer.appendChild(messageDiv);
+
+        // Optional: scroll to bottom
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     }
 
     chatForm.addEventListener('submit', function(event) {

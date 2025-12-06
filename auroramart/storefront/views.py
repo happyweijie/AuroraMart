@@ -17,6 +17,7 @@ from mlservices.get_recommendations import get_product_recommendations
 from mlservices.gemini_context import create_gemini_context
 from admin_panel.models import RecommendationPlacement
 from google import genai
+import markdown2
 
 # Helper function to annotate products with promotion data
 def annotate_products_with_promotions(products):

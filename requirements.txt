@@ -20,3 +20,4 @@ google-genai
 # Other dependencies
 rapidfuzz
 python-dotenv>=1.0.0
+markdown2
