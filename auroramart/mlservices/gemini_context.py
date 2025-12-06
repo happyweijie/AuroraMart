@@ -35,7 +35,7 @@ def create_gemini_context(session , user_message_text):
         
         context.append({
             "role": gemini_role,
-            "parts": [{"text": msg.content}]
+            "parts": [{"text": f"{msg.timestamp} {msg.content}"}]
         })
 
     # 3. Inject External Data -> order and product details if applicable
@@ -56,7 +56,7 @@ def create_gemini_context(session , user_message_text):
             order_items = [str(item) for item in order.items.all()]
             order_details_text = (
                 f"\nCURRENT ORDER CONTEXT: Order #{order.id}, Status: {order.status}, "
-                f"Items: {','.join(order_items)}, Shipping Address: {order.shipping_address}. "
+                f"Items: {','.join(order_items)}, Shipping Address: {order.shipping_address}, Order Last Updated: {order.updated_at}. "
                 f"The user's query must be answered using this factual context."
             )
             # Prepend facts to the new user message

@@ -15,11 +15,11 @@ def extract_product_name(user_message: str, product_catalog=get_product_catalog(
     found_products = []
     
     # Iterate through the official product names
-    for name in product_catalog:
+    for product_name in product_catalog:
         # Use .lower() for case-insensitive comparison
-        if name.lower() in normalized_msg:
+        if product_name.lower() in normalized_msg:
             # Append the original, correctly capitalized product name
-            found_products.append(name)
+            found_products.append(product_name)
             
     # Handle multiple mentions of the same product (keep unique names)
     return list(set(found_products))
