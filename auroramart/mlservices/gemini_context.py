@@ -1,7 +1,8 @@
 from storefront.models import Order, Product
 from .gemini_helpers.extract_primary_intent import extract_primary_intent
 from .gemini_helpers.extract_order_id import extract_order_id
-from .gemini_helpers.extract_product_names import extract_product_name
+from .gemini_helpers.extract_product_names import extract_entities_from_catalog
+from .gemini_helpers.get_product_catalog import get_product_catalog
 
 system_persona = "You are Aurora, a friendly and concise e-commerce shopping assistant. Your goal is to answer questions only about products, shipping, and existing orders. If the question is outside these topics, politely redirect the user back to chat with human staff through the Support Chat Page."
 
@@ -62,11 +63,33 @@ def create_gemini_context(session , user_message_text):
             # Prepend facts to the new user message
             new_user_content = order_details_text + "\n---\n" + new_user_content
     else:
-        product_names = extract_product_name(user_message_text)
-        if product_names:
-            products = Product.objects.filter(name__in=product_names)
-        else:
-            products = Product.objects.filter(is_active=True, archived=False)[:5]
+        # Extract entities from user message
+        entities = extract_entities_from_catalog(user_message_text, get_product_catalog())
+
+        # Start with all active products
+        queryset = Product.objects.filter(is_active=True, archived=False)
+
+        # Filter by product names if any
+        if entities['products']:
+            queryset = queryset.filter(name__in=entities['products'])
+
+        # Filter by brands if any
+        if entities['brands']:
+            # Use __icontains for case-insensitive match
+            brand_filters = queryset.none()
+            for brand in entities['brands']:
+                brand_filters |= queryset.filter(name__icontains=brand)
+            queryset = brand_filters
+
+        # Filter by categories if any
+        if entities['categories']:
+            queryset = queryset.filter(category__name__in=entities['categories'])
+
+        # Limit the number of results for fallback
+        if not queryset.exists():
+            queryset = Product.objects.filter(is_active=True, archived=False)[:5]
+
+        products = queryset
               
         if products.exists():
             product_details = []
@@ -86,4 +109,5 @@ def create_gemini_context(session , user_message_text):
         "parts": [{"text": new_user_content}]
     })
 
+    print(context)
     return context

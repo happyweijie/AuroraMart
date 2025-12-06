@@ -1,25 +1,40 @@
 from .get_product_catalog import get_product_catalog
+from rapidfuzz import fuzz
 
-def extract_product_name(user_message: str, product_catalog=get_product_catalog()) -> list:
+def extract_entities_from_catalog(user_message: str, product_catalog: list, threshold: int = 80) -> dict:
     """
-    Checks the user's message against a cached list of known product names.
+    Extracts products, inferred brands, and categories from a user's message.
     
     Args:
-        user_message: The raw text input from the user.
-        product_catalog: A list of known product names/SKUs (e.g., ['PureGlow Makeup Glow', 'UltraShine Lipstick']).
-        
+        user_message: Raw user input string.
+        product_catalog: List of product dictionaries:
+            [{'name': 'L’Oreal UltraShine Lipstick – Red Velvet', 'category': 'Beauty & Personal Care'}, ...]
+        threshold: Fuzzy match threshold (0-100).
+    
     Returns:
-        A list of matching product names found in the message.
+        Dictionary with keys: 'products', 'brands', 'categories'.
     """
     normalized_msg = user_message.lower()
-    found_products = []
-    
-    # Iterate through the official product names
-    for product_name in product_catalog:
-        # Use .lower() for case-insensitive comparison
-        if product_name.lower() in normalized_msg:
-            # Append the original, correctly capitalized product name
-            found_products.append(product_name)
+    results = {'products': [], 'brands': [], 'categories': []}
+
+    for product in product_catalog:
+        name = product['name']
+        category = product.get('category', '')
+        
+        if fuzz.partial_ratio(name.lower(), normalized_msg) >= threshold:
+            results['products'].append(name)
             
-    # Handle multiple mentions of the same product (keep unique names)
-    return list(set(found_products))
+            # Infer brand from first 1-2 words of the product name
+            brand_words = name.split()[:1]
+            brand = ' '.join(brand_words)
+            results['brands'].append(brand)
+            
+            if category:
+                results['categories'].append(category)
+
+    # Remove duplicates
+    results['products'] = list(set(results['products']))
+    results['brands'] = list(set(results['brands']))
+    results['categories'] = list(set(results['categories']))
+
+    return results
