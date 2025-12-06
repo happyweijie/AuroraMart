@@ -14,6 +14,7 @@ def extract_entities_from_catalog(user_message: str, product_catalog: list, thre
     Returns:
         Dictionary with keys: 'products', 'brands', 'categories'.
     """
+    # print(product_catalog)
     normalized_msg = user_message.lower()
     results = {'products': [], 'brands': [], 'categories': []}
 
@@ -37,4 +38,5 @@ def extract_entities_from_catalog(user_message: str, product_catalog: list, thre
     results['brands'] = list(set(results['brands']))
     results['categories'] = list(set(results['categories']))
 
+    # print(results)
     return results

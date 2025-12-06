@@ -65,7 +65,6 @@ def create_gemini_context(session , user_message_text):
     else:
         # Extract entities from user message
         entities = extract_entities_from_catalog(user_message_text, get_product_catalog())
-        print(entities)
         # Start with all active products
         queryset = Product.objects.filter(is_active=True, archived=False)
 
