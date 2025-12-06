@@ -121,6 +121,13 @@
                     <i data-lucide="shield" class="w-5 h-5"></i>
                     <span class="text-sm font-medium">Admin User Management</span>
                 </a>
+
+                <!-- Admin User Management -->
+                <a href="{% url 'admin_panel:aurora_chatbot_logs' %}" 
+                   class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent {% if request.resolver_match.url_name == 'aurora_chatbot_logs' %}active{% endif %}">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Aurora Chatbot Logs</span>
+                </a>
             </div>
         </nav>
         

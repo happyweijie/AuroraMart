@@ -38,4 +38,5 @@ urlpatterns = [
     path('admin-users/create/', views.admin_user_create, name='admin_user_create'),
     path('admin-users/<int:user_id>/edit/', views.admin_user_update, name='admin_user_update'),
     path('admin-users/<int:user_id>/delete/', views.admin_user_delete, name='admin_user_delete'),
+    path('aurora_logs', views.aurora_chatbot_logs, name='aurora_chatbot_logs')
 ]

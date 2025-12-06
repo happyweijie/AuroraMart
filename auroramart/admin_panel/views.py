@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 
-from storefront.models import Product, Order, OrderItem, Category, Review, ChatSession, ChatMessage, Promotion
+from storefront.models import Product, Order, OrderItem, Category, Review, ChatSession, ChatMessage, Promotion, AiChatSession, AiChatMessage
 from users.models import Customer, User
 from admin_panel.models import RecommendationPlacement, AnalyticsMetric, AuditLog
 from .decorators import staff_required
@@ -1460,3 +1460,14 @@ def admin_user_delete(request, user_id):
     
     return render(request, 'admin_panel/admin_user_confirm_delete.html', context)
 
+@staff_required
+def aurora_chatbot_logs(request):
+    # Chatbot sessions
+    sessions = AiChatSession.objects.order_by("-updated_at")
+    paginator = Paginator(sessions, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "admin_panel/aurora_chatbot_logs.html", {
+        "page_obj": page_obj,
+    })
