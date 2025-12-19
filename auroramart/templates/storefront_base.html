@@ -41,7 +41,7 @@
                     
                     {% if user.is_authenticated %}
                         <!-- Watchlist -->
-                        <a href="{% url 'storefront:watchlist' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
+                        <a href="{% url 'storefront:watchlist' %}" class="p-2 hover:bg-gray-100 rounded-lg relative" title="Watchlist">
                             <i data-lucide="heart" class="w-5 h-5 text-foreground"></i>
                             {% if watchlist_count > 0 %}
                             <span class="absolute top-0 right-0 w-4 h-4 bg-cyan text-white text-xs rounded-full flex items-center justify-center font-medium">{{ watchlist_count }}</span>
@@ -49,7 +49,7 @@
                         </a>
                         
                         <!-- Cart -->
-                        <a href="{% url 'storefront:cart' %}" class="p-2 hover:bg-gray-100 rounded-lg relative">
+                        <a href="{% url 'storefront:cart' %}" class="p-2 hover:bg-gray-100 rounded-lg relative" title="Cart">
                             <i data-lucide="shopping-cart" class="w-5 h-5 text-foreground"></i>
                             {% if cart_item_count > 0 %}
                             <span class="absolute top-0 right-0 w-5 h-5 bg-cyan text-white text-xs rounded-full flex items-center justify-center font-medium">{{ cart_item_count }}</span>
