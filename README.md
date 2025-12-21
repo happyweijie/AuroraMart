@@ -192,6 +192,11 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+#### Step 6.1 Running locally with Docker
+```bash
+docker-compose up --build
+```
+
 Access the application:
 - **Storefront:** [http://localhost:8000/](http://localhost:8000/)
 - **Admin Panel:** [http://localhost/panel/login](http://localhost:8000/panel/login)
